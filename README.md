@@ -56,6 +56,8 @@ Settings has Appearance, Animation settings, Tables and Advanced groups. Color c
 
 A handwritten note below the QR invites friends to scan and join the current room. The QR itself stays still and tappable. New topics deal into place, newly revealed answers flip in, and finishing a round brings confetti. Ordinary sync updates do not replay existing reveals, and refreshing completed results does not replay confetti.
 
+Both reminder notes use bundled Patrick Hand, a print-style handwritten font, so they match on phones and desktops without a cursive fallback or an external font service. Its SIL Open Font License is included under `shared/fonts`.
+
 Secondary actions have solid, muted fills so they remain distinct from the bright gradients. Night mode uses lighter action fills with dark text; selected ranker controls retain the palette accent. Ocean/Rose accents are deepened for smaller links. The contrast regression checks all five palettes, hover/selected states, dialogs, avatars, arrows and quiet footer controls, with phone/desktop layouts. Borders remain off and keyboard focus stays visible.
 
 Phones use shorter topic tiles and tighter spacing so the four progress steps and their directions stay visible on typical screens. Ranking arrows sit side by side but retain44px tap targets. Guess results follow the progress rather than pushing it down. Desktop sizing is unchanged; tiny screens or unusually long topics can still scroll normally rather than clipping content.

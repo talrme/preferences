@@ -28,7 +28,8 @@
 .ranker-choice svg{width:15px;height:15px}
 .ranker-info{width:36px;min-width:36px;min-height:40px;padding:8px;color:var(--muted)}
 .ranker-info svg{width:16px;height:16px}
-.ranker-reminder{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:5px 38px 14px 0;color:var(--accent);font:18px/1.25 "Bradley Hand","Segoe Print","Comic Sans MS",cursive;transform:rotate(-2deg)}
+@font-face{font-family:"Patrick Hand";src:url("fonts/PatrickHand-Regular.ttf") format("truetype");font-style:normal;font-weight:400;font-display:swap}
+.ranker-reminder{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:5px 38px 14px 0;color:var(--accent);font:18px/1.25 "Patrick Hand",sans-serif;transform:rotate(-2deg)}
 .ranker-reminder svg{width:28px;height:32px;flex-shrink:0;stroke-width:1.6;transform:translateY(-5px) rotate(-8deg)}
 .player-name{justify-self:start;min-width:0;overflow-wrap:anywhere;text-align:left}
 .player-name svg{width:15px}
@@ -132,7 +133,7 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px soli
 .item-library-option small{display:block;color:var(--muted);font-size:10px}
 .item-library-option:disabled{opacity:.5}
 #item-library-count{padding:6px 3px 0}
-.qr-reminder{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin:8px 16px 0 auto;color:var(--accent);font:17px/1.3 "Bradley Hand","Segoe Print","Comic Sans MS",cursive;transform:rotate(-2deg);max-width:260px}
+.qr-reminder{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin:8px 16px 0 auto;color:var(--accent);font:17px/1.3 "Patrick Hand",sans-serif;transform:rotate(-2deg);max-width:260px}
 .qr-reminder svg{width:28px;height:32px;stroke-width:1.6;transform:translateY(-8px)}
 .motion-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;margin:8px 0}
 .motion-heading strong{color:var(--accent)}

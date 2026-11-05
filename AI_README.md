@@ -6,6 +6,10 @@ Latest design request: brighter unobtrusive background and no decorative feature
 
 Top-right profile name/avatar must not be underlined. .topbar .header-name overrides the shared .text-link decoration; preserve click/focus behavior and do not remove underlines globally. Header/footer tests assert normal and hovered decoration is none.
 
+## Handwritten Note Font
+
+Both .ranker-reminder and .qr-reminder use self-hosted Patrick Hand (unjoined print handwriting), not device-dependent Bradley Hand/Segoe Print/cursive. Font and SIL OFL license are in shared/fonts; no external font request. Preserve the same face for both notes. font-display:swap with sans-serif fallback prevents generic cursive substitutions on phones. The older Bradley Hand references below describe the original implementation and are superseded here.
+
 ## Unavailable Step Hints
 
 Blocked navigation uses aria-disabled=true plus data-step-blocked with an escaped reason, NOT native disabled, allowing pointer/keyboard activation solely to explain prerequisites. The delegated handler intercepts before any action dispatch; busy saves remain native-disabled. #step-error is a hidden role=alert paragraph immediately below .step-navigation, revealed only on activation, red/light-red by palette and scrolled into view if necessary. Missing ranker takes priority; chosen ranker without4 topics gets the topic hint. Spectator waiting/Back controls explain ranker ownership. Every real render clears hints. Other controls (e.g. boundary reorder arrows) retain native disabled. tests/step-hints.cjs covers pointer/keyboard, prerequisite and spectator reasons, no mutation, hint clearing/all palettes. Playwright treats aria-disabled as disabled; use force click only when testing the explanatory activation.
