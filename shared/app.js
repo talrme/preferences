@@ -125,10 +125,10 @@
  function roundOptions(){const room=B.room;modal('Round options',`${room.owner?`<p class="fine">Ranker: ${esc(room.picker||'Unnamed')}${mine()?' (you)':''}</p>`:''}<div class="option-actions"><button data-select-picker>${glyph(mine()?'eye':'hand')} ${mine()?(pickerVisible?'Hide my ranking':'Show my ranking'):room.owner?'Become the ranker':'I’m the ranker'}</button>${mine()&&room.phase==='discuss'?'<button data-rerank>Adjust my ranking</button>':''}${mine()&&room.phase==='reveal'?'<button data-reveal-all>Reveal remaining preferences</button>':''}${room.phase==='setup'?`<label class="toggle">Individual guesses<input id="guessing" type="checkbox" ${room.guessesEnabled?'checked':''}></label>`:''}</div>`,`<button class="primary" data-close>Done</button>`,'round-options');}
  function selectPicker(){
   if(mine()){pickerVisible=!pickerVisible;signature='';render();return;}
+  const room=B.room,owner=room.owner,roundId=room.roundId,phase=room.phase;
+  const take=async()=>{if(!C.text(prefs.name))return playerName(take);const ok=await run(()=>command('select-picker',{device,name:prefs.name,avatar:prefs.avatar,takeover:true,expectedOwner:owner,expectedRoundId:roundId,expectedPhase:phase,roundId:crypto.randomUUID()}));if(ok){pickerVisible=true;guessEditing=false;saveOrder(B.room.items.map(i=>i.id));close();signature='';render();}};
+  if(owner||phase!=='setup')return confirm('Take over as ranker?',`${room.picker||'Someone else'} is currently the ranker. Are you sure you want to become the ranker for this round?${phase!=='setup'?' This restarts ranking and clears guesses and revealed answers.':''}`,take,'Yes, Become the Ranker');
   if(!C.text(prefs.name))return playerName(selectPicker);
-  const room=B.room,owner=room.owner,roundId=room.roundId;
-  const take=async()=>{const ok=await run(()=>command('select-picker',{device,name:prefs.name,avatar:prefs.avatar,takeover:true,expectedOwner:owner,expectedRoundId:roundId,roundId:crypto.randomUUID()}));if(ok){pickerVisible=true;guessEditing=false;saveOrder(B.room.items.map(i=>i.id));close();signature='';render();}};
-  if(room.phase!=='setup')return confirm('Become the ranker?',`${room.picker||'Someone else'} is already the ranker. Taking over restarts ranking for these four topics and clears guesses. Their private answers will not be shown.`,take,'Become ranker');
   return run(async()=>{await command('select-picker',{device,name:prefs.name,avatar:prefs.avatar});pickerVisible=true;guessEditing=false;});
  }
  function confirm(title,message,action,label='Continue'){modal(title,`<p>${esc(message)}</p>`,`<button data-close>Cancel</button><button class="primary" data-confirm>${esc(label)}</button>`,'confirm',action);}

@@ -38,3 +38,9 @@ for(const phase of ['setup','ranking','discuss','reveal','done']){
  const result=release({});assert.equal(result.owner,null);assert.equal(result.picker,'');assert.equal(result.phase,'setup');assert.equal(result.roundId,payload.roundId);assert.equal(result.revision,source.revision+1);assert.deepEqual(result.items,source.items);assert.deepEqual(result.seen,source.seen);assert.equal(result.guessesEnabled,source.guessesEnabled);assert.deepEqual(result.guesses,{});assert.deepEqual(result.revealed,[]);assert.equal(result.revealStarted,false);
 }
 console.log('PASS ranker release across all phases, owner/stale guards, fresh private round, kept topics/history/options and cleared guesses/reveals.');
+const setupTaken={...C.clone(nav),phase:'setup'},choose={device:'b',name:'Sophie',expectedRevision:setupTaken.revision};
+assert.throws(()=>C.apply(setupTaken,{type:'select-picker',payload:choose}),/picker changed/);
+const confirmed={...choose,takeover:true,expectedOwner:setupTaken.owner,expectedRoundId:setupTaken.roundId,expectedPhase:'setup',roundId:'confirmed-setup'};
+assert.throws(()=>C.apply(setupTaken,{type:'select-picker',payload:{...confirmed,expectedOwner:'stale'}}),/picker changed/);assert.throws(()=>C.apply(setupTaken,{type:'select-picker',payload:{...confirmed,expectedPhase:'ranking'}}),/picker changed/);
+const replaced=C.apply(setupTaken,{type:'select-picker',payload:confirmed});assert.equal(replaced.owner,'b');assert.equal(replaced.phase,'setup');assert.equal(replaced.roundId,'confirmed-setup');assert.deepEqual(replaced.items,setupTaken.items);assert.deepEqual(replaced.guesses,{});
+console.log('PASS setup takeover requires confirmation and matching owner/round/phase; confirmed takeover keeps topics in setup with fresh private round.');

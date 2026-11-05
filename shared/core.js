@@ -29,10 +29,10 @@
    const next=initial(state.id,p.roundId,now);next.items=state.items;next.seen=state.seen;next.guessesEnabled=Boolean(state.guessesEnabled);next.revision=state.revision+1;return next;
   }else if(cmd.type==='select-picker'){
    if(!p.device||!text(p.name))throw Error('Enter your name first.');
-   if(state.phase!=='setup'){
-    if(!p.takeover||p.expectedOwner!==state.owner||p.expectedRoundId!==state.roundId)throw Error('The picker changed. Please try again.');
+   if(p.takeover||(state.owner&&state.owner!==p.device)||state.phase!=='setup'){
+    if(!p.takeover||p.expectedOwner!==state.owner||p.expectedRoundId!==state.roundId||(p.expectedPhase&&p.expectedPhase!==state.phase))throw Error('The picker changed. Please try again.');
     if(!p.roundId||p.roundId===state.roundId)throw Error('A takeover needs a new ranking.');
-    state.roundId=p.roundId;state.phase='ranking';state.revealed=[];state.revealStarted=false;state.guesses={};
+    state.roundId=p.roundId;state.phase=state.phase==='setup'?'setup':'ranking';state.revealed=[];state.revealStarted=false;state.guesses={};
    }
    state.owner=p.device;state.picker=text(p.name).slice(0,50);state.pickerAvatar=cleanAvatar(p.avatar);
   }else if(cmd.type==='profile'){
