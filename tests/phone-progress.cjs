@@ -1,0 +1,15 @@
+const {chromium}=require('playwright'),assert=require('node:assert/strict');
+(async()=>{
+ const browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
+ try{
+  const p=await browser.newPage({viewport:{width:390,height:740},reducedMotion:'reduce'});await p.goto('http://127.0.0.1:5196/?demo=1&room=phone-progress');await p.locator('[data-draw]').waitFor();
+  async function fits(stage){for(const [width,height] of [[360,740],[390,740],[393,763],[412,800]]){await p.setViewportSize({width,height});await p.evaluate(()=>window.scrollTo(0,0));const bounds=await p.locator('.round-progress').boundingBox();assert(bounds.y+bounds.height<=height-8,`${stage} progress bottom ${Math.round(bounds.y+bounds.height)} exceeds ${width}x${height}`);assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));}await p.setViewportSize({width:390,height:740});await p.screenshot({path:`/tmp/preferences-progress-${stage}.png`});}
+  await fits('empty');
+  for(const [index,text] of ['Sleeping with your socks on','A spontaneous weekend away','Watching the trailers before a movie','Taking a long drive by yourself'].entries()){await p.locator(`[data-edit-item="${index}"]`).click();await p.locator('#item-text').fill(text);await p.locator('[data-save-item]').click();await p.locator('#modal').waitFor({state:'hidden'});}
+  await fits('topics');await p.locator('[data-round-options]').click();await p.locator('#guessing').check();await p.locator('.close').click();await p.locator('[data-volunteer]').click();await p.locator('#player-name').fill('Tal');await p.locator('[data-save-name]').click();await p.locator('[data-claim]').click();await p.locator('.ranking-list').waitFor();await fits('ranking');assert(await p.locator('.rank-tools button').evaluateAll(buttons=>buttons.every(el=>el.getBoundingClientRect().width>=44&&el.getBoundingClientRect().height>=44)));
+  await p.locator('[data-ready]').click();await p.locator('[data-start-reveal]').waitFor();await fits('discuss');await p.locator('[data-start-reveal]').click();await p.locator('[data-reveal]').waitFor();await fits('reveal');
+  for(let i=0;i<4;i++)await p.locator('[data-reveal]').click();await p.locator('[data-next]').waitFor();await fits('results');assert(await p.locator('.guess-results').evaluate(el=>el.getBoundingClientRect().top>=document.querySelector('.round-progress').getBoundingClientRect().bottom));
+  await p.setViewportSize({width:320,height:568});assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await p.setViewportSize({width:1280,height:900});assert.equal(await p.locator('.topic-tile').first().evaluate(el=>parseFloat(getComputedStyle(el).minHeight)),94);
+  console.log('PASS progress plus directions visible without scrolling across six stages at360/390/393/412px phone sizes, wrapped topics,44px arrows, tiny-screen fallback and unchanged desktop sizing.');
+ }finally{await browser.close();}
+})().catch(error=>{console.error(error);process.exitCode=1;});
