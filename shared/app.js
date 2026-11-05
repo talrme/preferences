@@ -193,7 +193,7 @@
   if(button.matches('[data-move]')){const ids=activeOrder(),index=Number(button.dataset.move),to=index+Number(button.dataset.direction);if(to>=0&&to<4){[ids[index],ids[to]]=[ids[to],ids[index]];saveActiveOrder(ids);sorter?.sort(ids,M.enabled(prefs,'reorder'));refreshRankLabels();signature='';M.pop(prefs,'reorder',$('#topic-list').children[to]);}return;}
   if(button.matches('[data-reveal]'))return reveal();if(button.matches('[data-reveal-all]')){close();return reveal(true);}
   if(button.matches('[data-next]'))return run(()=>command('reset',{roundId:crypto.randomUUID()}));
-  if(button.matches('[data-reset]'))return confirm('Start a new round?','This clears these four topics and any private ranking. Your topic library stays.',async()=>{if(await run(()=>command('reset',{roundId:crypto.randomUUID()})))close();});
+  if(button.matches('[data-reset]'))return confirm('Start a new round?','The topics, rankings, and guesses from this round will be cleared for everyone.',async()=>{if(await run(()=>command('reset',{roundId:crypto.randomUUID()})))close();},'Yes, Clear and Start New Round');
   if(button.matches('[data-confirm]')){const action=modalData;return action();}
   if(button.matches('[data-settings]'))return settings();if(button.matches('[data-topics]'))return topics();
   if(button.matches('[data-new-topic]'))return topicEditor();if(button.matches('[data-edit-topic]'))return topicEditor(button.dataset.editTopic);

@@ -6,6 +6,10 @@ Latest design request: brighter unobtrusive background and no decorative feature
 
 Top-right profile name/avatar must not be underlined. .topbar .header-name overrides the shared .text-link decoration; preserve click/focus behavior and do not remove underlines globally. Header/footer tests assert normal and hovered decoration is none.
 
+## New Round Confirmation Copy
+
+Reset confirmation says Start a new round? followed by The topics, rankings, and guesses from this round will be cleared for everyone. Confirm label is Yes, Clear and Start New Round; keep normal palette primary styling, no library explanation. Existing reset behavior is unchanged. round-controls.cjs checks wording, cancel/reset and long-button fit at320/390/1280.
+
 ## Bottom Round Controls (Current Placement)
 
 .round-utility is centered below progress/results: prominent .new-round.primary Start a New Round with existing reset confirmation, followed by the single labeled data-round-options control. Removed heading ellipsis; do not duplicate that selector at the top. Earlier references to heading Round options and small New round link are superseded. Random-topic controls unchanged. Static utility controls disable during saves/initial load; renderProgress and run manage disabled state. round-controls.cjs covers centered sizing, options dialog, reset/cancel, unchanged random draw and320/390/1280. Contrast suite treats new-round as a filled primary, not quiet page text. Phone progress placement stays above the utility area.
