@@ -3,6 +3,7 @@
  const clone=value=>JSON.parse(JSON.stringify(value));
  const text=value=>String(value||'').trim().replace(/\s+/g,' ');
  const normalized=value=>text(value).toLocaleLowerCase();
+ const cleanAvatar=value=>['koala','baby','cat','robot','fox'].includes(value)?value:'';
  const idleLimit=12*60*60*1000;
  function activityMillis(room){const value=room.lastActivityAt;return typeof value==='number'&&Number.isFinite(value)?value:value&&Number.isFinite(value.seconds)?value.seconds*1000+(value.nanoseconds||0)/1e6:null;}
  function expired(room,now=Date.now()){const time=activityMillis(room);return time!==null&&now-time>=idleLimit;}
@@ -28,7 +29,12 @@
     if(!p.roundId||p.roundId===state.roundId)throw Error('A takeover needs a new ranking.');
     state.roundId=p.roundId;state.phase='ranking';state.revealed=[];state.revealStarted=false;state.guesses={};
    }
-   state.owner=p.device;state.picker=text(p.name).slice(0,50);
+   state.owner=p.device;state.picker=text(p.name).slice(0,50);state.pickerAvatar=cleanAvatar(p.avatar);
+  }else if(cmd.type==='profile'){
+   if(!p.device)throw Error('This device could not be identified.');
+   const name=text(p.name).slice(0,50),avatar=cleanAvatar(p.avatar);
+   if(state.owner===p.device){state.picker=name;state.pickerAvatar=avatar;}
+   if(state.guesses?.[p.device])state.guesses[p.device]={...state.guesses[p.device],name:name||'Anonymous',avatar};
   }else if(cmd.type==='rename-picker'){
    if(state.owner!==p.device)throw Error('Only the picker can change their name.');
    if(!text(p.name))throw Error('Enter your name first.');state.picker=text(p.name).slice(0,50);
@@ -45,7 +51,7 @@
    if(!p.device||!text(p.name))throw Error('Enter your name first.');
    if(!Array.isArray(p.order)||p.order.length!==4||new Set(p.order).size!==4||p.order.some(id=>!state.items.some(i=>i.id===id)))throw Error('Rank all four topics in your guess.');
    state.guesses||={};if(!state.guesses[p.device]&&Object.keys(state.guesses).length>=50)throw Error('This round already has 50 guesses.');
-   state.guesses[p.device]={name:text(p.name).slice(0,50),order:[...p.order]};
+   state.guesses[p.device]={name:text(p.name).slice(0,50),avatar:cleanAvatar(p.avatar),order:[...p.order]};
   }else if(cmd.type==='claim'){
    if(state.phase!=='setup')throw Error('Someone is already ranking this round.');
    if(state.owner&&state.owner!==p.device)throw Error('Someone else is the picker. Select the picker control to take over.');
