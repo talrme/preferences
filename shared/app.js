@@ -62,6 +62,7 @@
   if(lastRoundId&&lastRoundId!==room.roundId){pickerVisible=true;guessEditing=false;if($('#modal').open&&!['topics','topic','settings','share'].includes(modalKind))close();window.scrollTo(0,0);}
   lastRoundId=room.roundId;
   if(lastPhase!==room.phase&&room.phase==='setup')localStorage.removeItem(key()+'-guess');
+  if(lastPhase==='setup'&&room.phase==='ranking'&&mine())saveOrder(room.items.map(item=>item.id));
   if(!['ranking','discuss'].includes(room.phase)||mine()||room.revealStarted||room.revealed.length)guessEditing=false;
   renderProgress();
   const ranking=(mine()&&pickerVisible&&room.phase==='ranking')||guessEditing;
@@ -76,7 +77,7 @@
   let heading,sub='',actions='',notice='',extras='';
   if(room.phase==='setup'){
    heading='Choose four topics';
-   actions=mine()?`<button class="primary" data-claim ${!complete?blocked('Choose all four topics before going to the next step.'):''}>Next: rank privately ${glyph('arrow-right')}</button>`:!room.owner?`<button class="primary" ${blocked('Select a ranker before going to the next step.')}>Next: rank privately ${glyph('arrow-right')}</button>`:waiting;
+   actions=`<button class="primary" data-claim ${!room.owner?blocked('Select a ranker before going to the next step.'):!complete?blocked('Choose all four topics before going to the next step.'):''}>${mine()||!room.owner?'Next: rank privately':`Next: ${room.picker?named:'the ranker'} ranks privately`} ${glyph('arrow-right')}</button>`;
    extras=!complete?`<div class="topic-source"><button class="secondary" data-draw>${glyph('shuffle')} Four random topics</button></div>`:'';
   }else if(guessEditing){heading='Your guess';sub=`${named}’s favorites, best to least`;notice='<strong>Your guess is separate.</strong><span>Moving these cards won’t change the ranker’s order.</span>';actions=`<button class="secondary" data-cancel-guess>${glyph('arrow-left')} Back</button><button class="primary" data-save-guess>Done: save my guess ${glyph('check')}</button>`;}
   else if(ranking){heading='Rank your favorites';notice='<strong>Only you can see this order.</strong><span>Favorite at the top, least favorite at the bottom.</span>';actions=`${back}<button class="primary" data-ready>Done ranking: discuss ${glyph('arrow-right')}</button>`;}
@@ -182,7 +183,7 @@
   if(button.matches('[data-volunteer]'))return mine()?releasePicker():selectPicker();
   if(button.matches('[data-select-picker]')){if(modalKind==='round-options')close();return selectPicker();}
   if(button.matches('[data-save-name]')){const name=C.text($('#player-name').value),avatar=$('[data-avatar][aria-pressed="true"]')?.dataset.avatar||'';if(!name&&typeof modalData==='function')return toast('Enter your name first.');const after=modalData;if((mine()||B.room?.guesses?.[device])&&!await run(()=>command('profile',{device,name,avatar})))return;prefs.name=name;prefs.avatar=avatar;savePrefs();close();signature='';render();if(typeof after==='function')after();return;}
-  if(button.matches('[data-claim]')){saveOrder(B.room.items.map(i=>i.id));pickerVisible=true;return run(()=>command('claim',{device,name:prefs.name}));}
+  if(button.matches('[data-claim]')){if(mine())pickerVisible=true;return run(()=>command('claim',{device,expectedRoundId:B.room.roundId}));}
   if(button.matches('[data-guess]')){const begin=()=>{guessEditing=true;signature='';render();};if(!C.text(prefs.name))return playerName(begin);return begin();}
   if(button.matches('[data-cancel-guess]')){guessEditing=false;signature='';return render();}
   if(button.matches('[data-save-guess]')){if(await run(()=>command('guess',{device,name:prefs.name,avatar:prefs.avatar,order:guessOrder()}))){guessEditing=false;signature='';render();}return;}

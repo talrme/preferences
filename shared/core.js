@@ -59,9 +59,10 @@
    state.guesses[p.device]={name:text(p.name).slice(0,50),avatar:cleanAvatar(p.avatar),order:[...p.order]};
   }else if(cmd.type==='claim'){
    if(state.phase!=='setup')throw Error('Someone is already ranking this round.');
-   if(state.owner&&state.owner!==p.device)throw Error('Someone else is the picker. Select the picker control to take over.');
    if(state.items.some(i=>!i.text))throw Error('Choose all four topics first.');
-   if(!p.device)throw Error('This device could not be identified.');state.owner=p.device;state.phase='ranking';if(p.name)state.picker=text(p.name).slice(0,50);
+   if(!state.owner)throw Error('Select a ranker before going to the next step.');
+   if(p.expectedRoundId&&p.expectedRoundId!==state.roundId)throw Error('The round changed. Please try again.');
+   if(!p.device)throw Error('This device could not be identified.');state.phase='ranking';
    state.seen=[...new Set([...state.seen,...state.items.map(i=>i.topicId).filter(Boolean)])].slice(-500);
   }else{
    if(state.owner!==p.device)throw Error('Only the picker can do that.');
