@@ -72,6 +72,8 @@ If someone is already the ranker, another player tapping **I'm the ranker** must
 
 During topic selection, **anyone** can tap Next once a ranker and all four topics are chosen. Other players see **Next: Sophie ranks privately** (or the selected name). This does not change the ranker or expose their private order. Later shared steps remain controlled by the ranker.
 
+On phones, swipe over ranking tiles to scroll normally. Hold a tile for about a third of a second before moving it to deliberately drag; mouse dragging stays immediate. The up/down arrows remain available. This applies to both the ranker's order and individual guesses.
+
 Modals are centered except topic/profile editors on phones, which open near the top and resize to the visible viewport so their Save footer stays above the keyboard. X, Escape and clicking outside close them. Draft text is saved only by its explicit Save button. Topic fields have no example placeholder; the optional switch says **Add this to the list of topics**.
 
 The four-color **horizontal-bar PNG**, like four ranked preferences, is the favicon, home-screen icon and header icon. Icon URLs are versioned to refresh caches; an already-installed phone shortcut might need removing and re-adding to replace its old artwork. Share / Save has room link copying, a locally generated QR and iPhone/Android installation instructions. The game dynamically creates a room-specific install manifest. Installed shortcuts are still websites, not separate data stores. Check your phone's installed shortcut opens the intended room; OS installation behavior can vary.
