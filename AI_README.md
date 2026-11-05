@@ -1,5 +1,11 @@
 # Preferences: AI Handoff
 
+## Header Name And Footer Tables
+
+Current layout supersedes the separate name/role/menu row: a static data-player-name button in topbar owns #player-name-label and displays locally saved name on the right (ellipsis/title for long names). Update text even on stable game signatures. Disable during writes/loading; clearName tolerates missing B.room. #player-controls is only the compact ranker label and is hidden with no owner. Round options moved into .round-heading-tools beside any shuffle icon; keep sorting/private-state behavior unchanged. No table/room button in header.
+
+Footer Settings / Topics / Share / Save / Table controls have24px column gaps on desktop, 18px/two columns on phones, with44px targets and QR alongside. data-room now opens tableInfo explanation, not Settings directly. Explain separate games and no password protection; do not call them secure/private rooms under public rules. Table info Close/X/backdrop work normally. data-table-settings calls settings('tables'), opens #settings-tables, collapses other groups, scrolls/focuses its summary. Normal Settings still opens Appearance. Create/join retains existing room URLs and storage identity, just uses Table wording. tests/header-footer.cjs checks header persistence/long names,320/390/1280 overflow/spacing, guide close/backdrop, settings section focus, and create/join. Real two-browser test checks compact header gap without a name row. No backend changes.
+
 ## Compact Header
 
 Do not show Live with your table or a Saving subtitle in healthy shared mode. #connection is hidden/empty for live/loading, with no reserved layout space; topbar keeps12px breathing room before player controls. Keep reconnecting, offline/error and sandbox/local-only status visible so failed sync or disconnected testing is never disguised. Initial HTML status is hidden to prevent a flash of obsolete text. Firestore test checks healthy status hidden, compact gap and offline notice visible. No backend behavior changed.
