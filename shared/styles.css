@@ -151,3 +151,18 @@ body[data-fx-taps=false] button:active{transform:none}
 body[data-fx-dialogs=false] .close svg{transition:none}
 @keyframes note-nudge{0%,75%,100%{translate:0 0}85%{translate:2px -4px}93%{translate:0 0}}
 @media(prefers-reduced-motion:reduce){body[data-fx-ambient=true] .identity img{animation:none!important}}
+
+/* Solid action surfaces stay distinct from every point in the page gradient. */
+body{--control:#455f6c;--control-hover:#354d59;--control-ink:#fff;--disabled:#d2dfe3;--disabled-ink:#4c626b}
+body[data-palette=citrus]{--control:#496348;--control-hover:#364e36}
+body[data-palette=ocean]{--control:#3e6275;--control-hover:#2d4d60;--accent:#1b6082}
+body[data-palette=rose]{--control:#775268;--control-hover:#604055;--accent:#963657}
+body[data-palette=night]{--control:#adc9be;--control-hover:#c3dcd2;--control-ink:#18352b;--disabled:#334b42;--disabled-ink:#b5ccc1}
+:is(.secondary,.ranker-choice,.rank-tools .icon,.option-actions>button),.modal-footer>button:not(.primary):not(.text-link){background:var(--control);color:var(--control-ink)}
+:is(.secondary,.ranker-choice,.rank-tools .icon,.option-actions>button):not(:disabled):hover,.modal-footer>button:not(.primary):not(.text-link):not(:disabled):hover{background:var(--control-hover);color:var(--control-ink)}
+.ranker-choice.selected,.ranker-choice.selected:not(:disabled):hover{background:var(--accent);color:var(--accent-ink)}
+.ranker-switch{background:#d3dce0}
+.ranker-switch>span{background:#52616b}
+.ranker-choice.selected .ranker-switch{background:var(--accent-ink)}
+.ranker-choice.selected .ranker-switch>span{background:var(--accent)}
+.step-navigation .primary:disabled,.step-navigation .secondary:disabled{background:var(--disabled);color:var(--disabled-ink);opacity:1}

@@ -6,6 +6,10 @@ Latest design request: brighter unobtrusive background and no decorative feature
 
 Top-right profile name/avatar must not be underlined. .topbar .header-name overrides the shared .text-link decoration; preserve click/focus behavior and do not remove underlines globally. Header/footer tests assert normal and hovered decoration is none.
 
+## Contrast On Gradients
+
+The final CSS action-surface block defines --control/--control-hover/--control-ink and disabled tokens per palette. Secondary actions, ranker toggle, ranking arrows, non-primary modal footer buttons and Round options use opaque muted fills; night mode inverts them. Selected ranker uses accent and an inverse thumb/track; disabled step buttons use separate muted tokens. Ocean/Rose accent values are deepened for readable small links/handwritten notes. Preserve borderless styling and keyboard focus. Keep the modal-footer selector separate from :is() groups so its higher specificity does not accidentally override selected/disabled controls. tests/contrast.cjs asserts4.5:1 enabled text and quiet page text,3:1 actionable fills against21 sampled gradient positions, all palettes/hover/selected states and320/390/1280 layout, plus screenshots. No behavior/backend changes.
+
 ## Animation Controls And QR Invitation
 
 shared/motion.js is the local-only effect catalog, preset/legacy migration and bounded Web Animations API helper. Load before app.js. prefs.animationPreset is off/gentle/playful/ridiculous/custom (ridiculous displays as Extra); prefs.animations holds nine boolean switches; prefs.customAnimations retains the manual mix across preset changes. Keep prefs.motion as compatibility-derived off/gentle/playful/ridiculous. data-fx-* attributes gate CSS movement. Existing Off preference survives migration. Default Playful excludes ambient movement; Extra includes all. #motion is now a0-4 range, no longer a select. Individual toggles switch to Custom. Changes apply immediately without backend writes or requiring Save; Save closes Settings. Animation settings has its own details group after Appearance, with Customize effects nested beneath it.
