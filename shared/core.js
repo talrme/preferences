@@ -7,7 +7,7 @@
  const idleLimit=12*60*60*1000;
  function activityMillis(room){const value=room.lastActivityAt;return typeof value==='number'&&Number.isFinite(value)?value:value&&Number.isFinite(value.seconds)?value.seconds*1000+(value.nanoseconds||0)/1e6:null;}
  function expired(room,now=Date.now()){const time=activityMillis(room);return time!==null&&now-time>=idleLimit;}
- function initial(id,roundId,now=Date.now()){return {id,roundId,revision:0,phase:'setup',picker:'',owner:null,items:[0,1,2,3].map(i=>({id:'slot-'+i,text:'',topicId:null})),revealed:[],revealStarted:false,seen:[],guessesEnabled:false,guesses:{},lastActivityAt:now};}
+ function initial(id,roundId,now=Date.now()){return {id,roundId,revision:0,phase:'setup',picker:'',owner:null,items:[0,1,2,3].map(i=>({id:'slot-'+i,text:'',topicId:null})),revealed:[],revealDirection:'top-down',revealStarted:false,seen:[],guessesEnabled:false,guesses:{},lastActivityAt:now};}
  function validateTopic(value){const clean=text(value);if(!clean||clean.length>140)throw Error('Use 1–140 characters for a topic.');return clean;}
  function apply(source,cmd,now=Date.now()){
   const state=clone(source),p=cmd.payload||{};
@@ -32,7 +32,7 @@
    if(p.takeover||(state.owner&&state.owner!==p.device)||state.phase!=='setup'){
     if(!p.takeover||p.expectedOwner!==state.owner||p.expectedRoundId!==state.roundId||(p.expectedPhase&&p.expectedPhase!==state.phase))throw Error('The picker changed. Please try again.');
     if(!p.roundId||p.roundId===state.roundId)throw Error('A takeover needs a new ranking.');
-    state.roundId=p.roundId;state.phase=state.phase==='setup'?'setup':'ranking';state.revealed=[];state.revealStarted=false;state.guesses={};delete state.discussionOrder;
+    state.roundId=p.roundId;state.phase=state.phase==='setup'?'setup':'ranking';state.revealed=[];state.revealDirection='top-down';state.revealStarted=false;state.guesses={};delete state.discussionOrder;
    }
    state.owner=p.device;state.picker=text(p.name).slice(0,50);state.pickerAvatar=cleanAvatar(p.avatar);
   }else if(cmd.type==='profile'){
@@ -80,7 +80,7 @@
     else if(state.phase==='done'){state.phase='reveal';state.revealStarted=true;state.revealed=state.revealed.slice(0,-1);}
     else throw Error('You are already at the first step.');
    }else if(cmd.type==='start-reveal'){
-    if(state.phase!=='discuss')throw Error('Finish the discussion before moving to reveal.');state.phase='reveal';
+    if(state.phase!=='discuss')throw Error('Finish the discussion before moving to reveal.');state.phase='reveal';if(!state.revealed.length)state.revealDirection='top-down';
    }else if(cmd.type==='ready'){
     if(state.phase!=='ranking')throw Error('This round is not ready for that.');state.phase='discuss';state.discussionOrder=discussionOrder(state);
    }else if(cmd.type==='rerank'){
@@ -88,7 +88,7 @@
    }else if(cmd.type==='reveal'){
     if(!['discuss','reveal'].includes(state.phase))throw Error('Hide the ranking before revealing it.');
     const ids=p.ids;if(!Array.isArray(ids)||ids.length<=state.revealed.length||ids.length>4||new Set(ids).size!==ids.length||ids.some(id=>!state.items.some(i=>i.id===id))||state.revealed.some((id,i)=>ids[i]!==id))throw Error('The reveal order changed. Try again.');
-    state.revealed=ids;state.revealStarted=true;state.phase=ids.length===4?'done':'reveal';
+    if(!state.revealed.length)state.revealDirection='top-down';state.revealed=ids;state.revealStarted=true;state.phase=ids.length===4?'done':'reveal';
    }else throw Error('Unknown action.');
   }
   state.lastActivityAt=now;state.revision++;return state;
@@ -105,6 +105,7 @@
  }
  function privateOrder(room,saved){const ids=room.items.map(i=>i.id);return Array.isArray(saved)&&saved.length===4&&new Set(saved).size===4&&saved.every(id=>ids.includes(id))?[...saved]:ids;}
  function discussionOrder(room){return privateOrder(room,room.discussionOrder);}
+ function revealedOrder(room){const result=[null,null,null,null];room.revealed.forEach((id,index)=>{result[room.revealDirection==='top-down'?index:3-index]=id;});return result;}
  function resetExpired(room,roundId,now=Date.now()){return expired(room,now)?apply(room,{type:'reset',payload:{roundId,expectedRevision:room.revision}},now):room;}
- const api={clone,text,normalized,initial,validateTopic,apply,draw,privateOrder,discussionOrder,activityMillis,expired,resetExpired,idleLimit};root.PreferencesCore=api;if(typeof module!=='undefined')module.exports=api;
+ const api={clone,text,normalized,initial,validateTopic,apply,draw,privateOrder,discussionOrder,revealedOrder,activityMillis,expired,resetExpired,idleLimit};root.PreferencesCore=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof globalThis==='undefined'?this:globalThis);
