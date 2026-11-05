@@ -165,6 +165,10 @@ body[data-palette=night]{--control:#adc9be;--control-hover:#c3dcd2;--control-ink
 .ranker-choice.selected .ranker-switch{background:var(--accent-ink)}
 .ranker-choice.selected .ranker-switch>span{background:var(--accent)}
 .step-navigation .primary:disabled,.step-navigation .secondary:disabled{background:var(--disabled);color:var(--disabled-ink);opacity:1}
+.step-navigation button[aria-disabled=true]{background:var(--disabled);color:var(--disabled-ink);opacity:1;cursor:pointer}
+.step-navigation button[aria-disabled=true]:hover{background:var(--disabled);color:var(--disabled-ink)}
+.step-error{font-size:12px;line-height:1.4;margin:8px 0 0;color:#a1223e}
+body[data-palette=night] .step-error{color:#ffb1bf}
 
 @media(max-width:600px){
  .app{padding:12px 14px 30px}
