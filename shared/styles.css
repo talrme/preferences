@@ -24,6 +24,18 @@
 .round-menu{color:var(--muted)}
 .option-actions{display:grid;gap:12px}
 .option-actions .toggle{padding:8px 0}
+.stage-notice{display:grid;gap:5px;margin:0 0 16px;padding:12px 14px;background:var(--soft);border-inline-start:3px solid var(--accent);border-radius:4px;font-size:12px;line-height:1.5}
+.stage-notice strong{font-weight:700}
+.stage-notice>span{color:var(--muted)}
+.stage-notice button{justify-self:start;margin-top:4px;font-size:12px}
+.topic-source{display:flex;justify-content:flex-end;margin:0 0 12px}
+.topic-source button{font-size:12px}
+.round-actions.step-navigation{display:grid;grid-template-columns:88px minmax(0,1fr);align-items:stretch;gap:10px}
+.round-actions.step-navigation:has(>button:only-child){grid-template-columns:minmax(0,1fr)}
+.step-navigation button{font-size:13px;min-height:48px;padding:10px;white-space:normal;overflow-wrap:anywhere}
+.step-navigation .primary{justify-content:center}
+.step-navigation .primary:disabled{opacity:1;background:var(--soft);border-color:var(--line);color:var(--muted)}
+.step-navigation .step-back:disabled{opacity:.55}
 .drag-ghost{opacity:.5}
 .sortable-fallback,.topic-tile.dragging{opacity:1!important;background:var(--tile);box-shadow:0 14px 32px #0004;border:2px solid var(--accent)}
 .guess-toggle{grid-column:1 / -1;margin-top:7px;font-size:12px}
