@@ -25,7 +25,12 @@
  const liveShareUrl=()=>{const url=new URL(PREFERENCES_CONFIG.liveUrl);url.searchParams.set('room',roomId);return url.href;};
  function qr(node,size){node.replaceChildren();new QRCode(node,{text:location.hostname==='127.0.0.1'||location.hostname==='localhost'?liveShareUrl():shareUrl(),width:size,height:size,colorDark:'#15262c',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});}
  function toast(message){clearTimeout(noticeTimer);const target=$('#modal').open?$('#modal-error'):$('#toast');if(!target)return;target.textContent=message;target.hidden=false;noticeTimer=setTimeout(()=>{if(target.id==='toast')target.hidden=true;},6500);}
- async function run(fn){if(busy)return false;busy=true;renderStatus();document.querySelectorAll('#game button,#player-controls button,#player-controls input').forEach(b=>b.disabled=true);try{await fn();return true;}catch(error){toast(error.code==='permission-denied'?'Database access is blocked. Check Firebase rules, then retry.':error.message);return false;}finally{busy=false;signature='';render();}}
+ async function run(fn){
+  if(busy)return false;busy=true;renderStatus();
+  const options=modalKind==='round-options'?[...$('#modal').querySelectorAll('button,input')].map(el=>[el,el.disabled]):[];
+  options.forEach(([el])=>el.disabled=true);document.querySelectorAll('#game button,#player-controls button,#player-controls input').forEach(b=>b.disabled=true);
+  try{await fn();return true;}catch(error){toast(error.code==='permission-denied'?'Database access is blocked. Check Firebase rules, then retry.':error.message);return false;}finally{busy=false;options.forEach(([el,disabled])=>el.disabled=disabled);signature='';render();}
+ }
  async function command(type,payload={}){return B.command({type,payload:{...payload,expectedRevision:B.room.revision}});}
  function renderStatus(){const state=B.status;$('#connection').className='connection '+state;$('#connection').textContent=busy?'Saving…':state==='live'?'Live with your table':state==='sandbox'?'Sandbox · only on this device':state==='local'?'On this device · sharing is not connected':state==='reconnecting'?'Reconnecting with your table…':state==='offline'?'Offline · shared changes need a connection':state==='error'?'Not connected · '+(B.error||'retry in Settings'):'Connecting…';}
  function renderProgress(){
@@ -33,6 +38,8 @@
   const phase=B.room?.phase,index=({setup:0,ranking:1,discuss:2,reveal:3,done:3})[phase]??0;
   const list=$('#progress-steps');list.style.setProperty('--stage',index);
   list.querySelectorAll('li').forEach((step,i)=>{step.classList.toggle('complete',i<index||phase==='done');step.classList.toggle('current',Boolean(phase)&&i===index);if(phase&&i===index)step.setAttribute('aria-current','step');else step.removeAttribute('aria-current');});
+  const room=B.room,name=room?.picker||'The picker';
+  $('#step-direction').textContent=!room?'':phase==='setup'?(room.items.some(i=>!i.text)?'Choose four topics together, or draw four at random.':room.owner?(mine()?'Ready? Rank these four privately.':`${name} can start ranking. You're welcome to edit the topics first.`):'Choose whose preferences everyone will guess. That person taps “I’m the picker”.'):guessEditing?'Put your guess from favorite to least favorite, then save.':phase==='ranking'?(mine()&&pickerVisible?'Drag the cards from favorite to least favorite, then tap Ready.':`${name} is ranking privately. Everyone else can discuss.`):phase==='discuss'?'Discuss the picker’s order together, then reveal the least favorite first.':phase==='done'?'Compare the results, then pass the phone for a new round.':'Reveal the next preference, working up to the favorite.';
  }
  function tile(item,index,ranking=false){
   const empty=!item.text;
@@ -49,21 +56,21 @@
   const sig=JSON.stringify([room.id,room.roundId,room.revision,room.phase,room.picker,room.owner,room.items.map(i=>[i.id,i.text,i.topicId]),room.revealed,ranking?activeOrder():null,busy,prefs.name,pickerVisible,guessEditing]);if(sig===signature){if(modalKind==='topics')renderTopics();return;}signature=sig;
   sorter?.destroy();sorter=null;
   const named=room.picker?esc(room.picker):'The picker';
-  $('#player-controls').innerHTML=`<button class="text-link player-name" data-player-name>${glyph('user-round')} ${esc(prefs.name||'Your name')}</button><button class="${mine()&&pickerVisible?'primary':'secondary'} picker-control" data-select-picker aria-pressed="${mine()&&pickerVisible}">${glyph(mine()?'user-check':'hand')} ${mine()?(pickerVisible?'I’m the picker':'Show my picker view'):'I’m the picker'}</button>${room.owner&&!mine()?`<p class="fine current-picker">${named} is the picker</p>`:''}${room.phase==='setup'?`<label class="toggle guess-toggle">Individual guesses<input type="checkbox" id="guessing" ${room.guessesEnabled?'checked':''} ${busy?'disabled':''}></label>`:''}`;
+  $('#player-controls').innerHTML=`<button class="text-link player-name" data-player-name>${glyph('user-round')} ${esc(prefs.name||'Your name')}</button>${room.owner?`<span class="current-picker">Picker: <strong>${room.picker?named:'Unnamed'}${mine()?' (you)':''}</strong></span>`:''}<button class="icon round-menu" data-round-options aria-label="Round options" title="Round options">${glyph('ellipsis')}</button>`;
   let heading,sub,actions='';
   if(room.phase==='setup'){
-   heading='Pick four.';sub='';actions=`<button class="secondary" data-draw>${glyph('shuffle')} Four random topics</button>${mine()?`<button class="primary" data-claim ${room.items.some(i=>!i.text)?'disabled':''}>${glyph('sparkles')} Rank privately</button>`:''}`;
+   heading='Choose four topics';sub='';actions=room.items.some(i=>!i.text)?`<button class="primary" data-draw>${glyph('shuffle')} Four random topics</button>`:mine()?`<button class="primary" data-claim>${glyph('sparkles')} Rank privately</button>`:!room.owner?`<button class="primary" data-select-picker>${glyph('hand')} I’m the picker</button>`:'';
   }else if(guessEditing){heading='Your guess.';sub=`${named}’s favorites, best to least`;actions='<button class="primary" data-save-guess>Save my guess</button><button class="text-link" data-cancel-guess>Back to the table</button>';}
   else if(ranking){heading='Your favorites, in order.';sub='Only on your phone';actions=`<button class="primary" data-ready>${glyph('eye-off')} Ready · hide my ranking</button>`;}
-  else if(room.phase==='ranking'){heading=`${named} is ranking.`;sub='Talk amongst yourselves.';}
-  else if(room.phase==='discuss'){heading='What’s the order?';sub=mine()?'Your ranking is hidden.':'Make your case.';if(mine()&&pickerVisible)actions=`<button class="primary" data-reveal>${glyph('sparkles')} Reveal least favorite</button><button class="text-link" data-rerank>Adjust my ranking</button>`;}
-  else{heading=room.phase==='done'?'Well, there it is.':'The plot thickens.';sub=room.picker?`${named}’s preferences`:'';if(mine()&&room.phase!=='done')actions=`<button class="primary" data-reveal>${glyph('sparkles')} ${room.revealed.length===3?'Reveal the favorite':'Reveal next'}</button><button class="text-link" data-reveal-all>Reveal all</button>`;if(room.phase==='done')actions=`<button class="primary" data-next>${glyph('rotate-cw')} Next round</button>`;}
+  else if(room.phase==='ranking'){heading=mine()?'Your ranking is hidden':`${named} is ranking`;sub='';if(mine())actions='<button class="primary" data-select-picker>Show my ranking</button>';}
+  else if(room.phase==='discuss'){heading='Guess the order';sub='';if(mine())actions=`<button class="primary" data-reveal>${glyph('sparkles')} Reveal least favorite</button>`;}
+  else{heading=room.phase==='done'?'The results':'Reveal the order';sub='';if(mine()&&room.phase!=='done')actions=`<button class="primary" data-reveal>${glyph('sparkles')} ${room.revealed.length===3?'Reveal the favorite':'Reveal next'}</button>`;if(room.phase==='done')actions=`<button class="primary" data-next>${glyph('rotate-cw')} Next round</button>`;}
   let body;
   if(['reveal','done'].includes(room.phase))body=`<ol class="topic-list revealed-list">${[0,1,2,3].map(i=>{const id=room.revealed[3-i],item=room.items.find(t=>t.id===id);return `<li class="topic-tile reveal-tile ${item?'revealed':'unrevealed'}" style="--i:${i}" data-rank="${i+1}"><span class="tile-number">${i+1}</span><span class="tile-text">${item?esc(item.text):'…'}</span>${i===0?`<span class="favorite-icon">${glyph('heart')}</span>`:''}</li>`;}).join('')}</ol>`;
   else body=`${ranking?'<div class="rank-label"><span>Most favorite</span><span>↓</span></div>':''}<ol id="topic-list" class="topic-list ${ranking?'ranking-list':''}">${(ranking?activeOrder().map(id=>room.items.find(i=>i.id===id)):room.items).map((item,i)=>tile(item,i,ranking)).join('')}</ol>${ranking?'<div class="rank-label rank-bottom">Least favorite</div>':''}`;
-  if(room.guessesEnabled&&!mine()&&!guessEditing&&['ranking','discuss'].includes(room.phase))actions+=`<button class="secondary" data-guess>${glyph('list-ordered')} ${room.guesses?.[device]?'Edit my guess':'Make my guess'}</button>`;
+  if(room.guessesEnabled&&!mine()&&!guessEditing&&['ranking','discuss'].includes(room.phase))actions+=`<button class="primary" data-guess>${glyph('list-ordered')} ${room.guesses?.[device]?'Edit my guess':'Make my guess'}</button>`;
   const guesses=Object.values(room.guesses||{}),results=room.phase==='done'&&room.guessesEnabled?`<section class="guess-results"><h3>How did we guess?</h3>${guesses.length?guesses.map(g=>({...g,correct:g.order.filter((id,i)=>id===room.revealed[3-i]).length})).sort((a,b)=>b.correct-a.correct||a.name.localeCompare(b.name)).map(g=>`<div><span>${esc(g.name)}</span><strong>${g.correct===4?'Perfect match!':g.correct+' / 4'}</strong></div>`).join(''):'<p class="fine">No guesses this round.</p>'}</section>`:'';
-  $('#game').innerHTML=`<div class="round-heading"><div><h2>${heading}</h2>${sub?`<p>${sub}</p>`:''}</div></div>${body}<div class="round-actions">${actions}</div>${room.guessesEnabled&&['ranking','discuss'].includes(room.phase)?`<p class="fine guess-count">${guesses.length} ${guesses.length===1?'guess':'guesses'} saved</p>`:''}${results}`;
+  $('#game').innerHTML=`<div class="round-heading"><div><h2>${heading}</h2>${sub?`<p>${sub}</p>`:''}</div>${room.phase==='setup'&&room.items.every(i=>i.text)?`<button class="icon quiet" data-draw title="Draw four new topics" aria-label="Draw four new topics">${glyph('shuffle')}</button>`:''}</div>${body}${actions?`<div class="round-actions">${actions}</div>`:''}${room.guessesEnabled&&['ranking','discuss'].includes(room.phase)?`<p class="fine guess-count">${guesses.length} ${guesses.length===1?'guess':'guesses'} saved</p>`:''}${results}`;
   if(ranking){const roundId=room.roundId;sorter=new Sortable($('#topic-list'),{animation:220,filter:'button,input,a',preventOnFilter:false,fallbackTolerance:5,ghostClass:'drag-ghost',chosenClass:'drag-chosen',dragClass:'dragging',forceFallback:true,fallbackOnBody:true,onStart(){dragging=true;},onEnd(){const ids=[...$('#topic-list').children].map(el=>el.dataset.id);if(B.room.roundId===roundId)saveActiveOrder(ids);dragging=false;refreshRankLabels();signature='';requestAnimationFrame(render);}});}
   if(lastPhase!==room.phase){document.body.dataset.phase=room.phase;if(room.phase==='done'&&lastPhase)celebrate();lastPhase=room.phase;}
   if(busy)document.querySelectorAll('#game button,#player-controls button,#player-controls input').forEach(button=>button.disabled=true);
@@ -76,10 +83,12 @@
  window.visualViewport?.addEventListener('resize',updateEditorViewport);
  window.visualViewport?.addEventListener('scroll',updateEditorViewport);
  function close(){modalKind='';modalData=null;$('#modal').close();}
- function playerName(after){modal('What’s your name?',`<label>Name<input id="player-name" maxlength="50" value="${esc(prefs.name||'')}" autocomplete="given-name"></label>`,`<button data-close>Cancel</button><button class="primary" data-save-name>Save</button>`,'name',after);$('#player-name').focus();}
+ function playerName(after){modal('Your name',`<label>Name<input id="player-name" maxlength="50" value="${esc(prefs.name||'')}" autocomplete="given-name"></label>`,`${prefs.name?'<button class="text-link danger" data-clear-name>Remove my name</button>':''}<button data-close>Cancel</button><button class="primary" data-save-name>Save</button>`,'name',after);$('#player-name').focus();}
+ async function clearName(){if((mine()||B.room.guesses?.[device])&&!await run(()=>command('clear-name',{device})))return;prefs.name='';savePrefs();close();signature='';render();}
+ function roundOptions(){const room=B.room;modal('Round options',`${room.owner?`<p class="fine">Picker: ${esc(room.picker||'Unnamed')}${mine()?' (you)':''}</p>`:''}<div class="option-actions"><button data-select-picker>${glyph(mine()?'eye':'hand')} ${mine()?(pickerVisible?'Hide my picker view':'Show my picker view'):room.owner?'Become the picker':'I’m the picker'}</button>${mine()&&room.phase==='discuss'?'<button data-rerank>Adjust my ranking</button>':''}${mine()&&room.phase==='reveal'?'<button data-reveal-all>Reveal remaining preferences</button>':''}${room.phase==='setup'?`<label class="toggle">Individual guesses<input id="guessing" type="checkbox" ${room.guessesEnabled?'checked':''}></label>`:''}</div>`,`<button class="primary" data-close>Done</button>`,'round-options');}
  function selectPicker(){
-  if(!C.text(prefs.name))return playerName(selectPicker);
   if(mine()){pickerVisible=!pickerVisible;signature='';render();return;}
+  if(!C.text(prefs.name))return playerName(selectPicker);
   const room=B.room,owner=room.owner,roundId=room.roundId;
   const take=async()=>{const ok=await run(()=>command('select-picker',{device,name:prefs.name,takeover:true,expectedOwner:owner,expectedRoundId:roundId,roundId:crypto.randomUUID()}));if(ok){pickerVisible=true;guessEditing=false;saveOrder(B.room.items.map(i=>i.id));close();signature='';render();}};
   if(room.phase!=='setup')return confirm('Become the picker?',`${room.picker||'Someone else'} is already the picker. Taking over restarts ranking for these four topics and clears guesses. Their private answers will not be shown.`,take,'Become picker');
@@ -101,16 +110,18 @@
   if(button.matches('[data-edit-item]'))return editItem(Number(button.dataset.editItem));
   if(button.matches('[data-save-item]')){const draft=modalData,text=$('#item-text').value,save=$('#save-topic').checked;const ok=await run(async()=>{if(B.room.phase!=='setup'||B.room.revision!==draft.revision)throw Error('This round changed while you were editing. Close and reopen the topic.');const clean=C.validateTopic(text),items=C.clone(B.room.items);items[draft.index]={...items[draft.index],text:clean,topicId:null};C.apply(B.room,{type:'items',payload:{items,expectedRevision:B.room.revision}});if(save&&!B.topics.some(t=>!t.archived&&C.normalized(t.text)===C.normalized(clean)))await B.topic({text:clean});await command('items',{items});});if(ok)close();return;}
   if(button.matches('[data-player-name]'))return playerName();
-  if(button.matches('[data-select-picker]'))return selectPicker();
-  if(button.matches('[data-save-name]')){const name=C.text($('#player-name').value);if(!name)return toast('Enter your name first.');const after=modalData;if(mine()&&!await run(()=>command('rename-picker',{device,name})))return;prefs.name=name;savePrefs();close();signature='';render();if(typeof after==='function')after();return;}
+  if(button.matches('[data-round-options]'))return roundOptions();
+  if(button.matches('[data-clear-name]'))return clearName();
+  if(button.matches('[data-select-picker]')){if(modalKind==='round-options')close();return selectPicker();}
+  if(button.matches('[data-save-name]')){const name=C.text($('#player-name').value);if(!name)return typeof modalData==='function'?toast('Enter your name first.'):clearName();const after=modalData;if(mine()&&!await run(()=>command('rename-picker',{device,name})))return;prefs.name=name;savePrefs();close();signature='';render();if(typeof after==='function')after();return;}
   if(button.matches('[data-claim]')){saveOrder(B.room.items.map(i=>i.id));pickerVisible=true;return run(()=>command('claim',{device,name:prefs.name}));}
   if(button.matches('[data-guess]')){const begin=()=>{guessEditing=true;signature='';render();};if(!C.text(prefs.name))return playerName(begin);return begin();}
   if(button.matches('[data-cancel-guess]')){guessEditing=false;signature='';return render();}
   if(button.matches('[data-save-guess]')){if(await run(()=>command('guess',{device,name:prefs.name,order:guessOrder()}))){guessEditing=false;signature='';render();}return;}
   if(button.matches('[data-ready]'))return run(()=>command('ready',{device}));
-  if(button.matches('[data-rerank]'))return run(()=>command('rerank',{device}));
+  if(button.matches('[data-rerank]')){close();pickerVisible=true;return run(()=>command('rerank',{device}));}
   if(button.matches('[data-move]')){const ids=activeOrder(),index=Number(button.dataset.move),to=index+Number(button.dataset.direction);if(to>=0&&to<4){[ids[index],ids[to]]=[ids[to],ids[index]];saveActiveOrder(ids);sorter?.sort(ids,true);refreshRankLabels();signature='';}return;}
-  if(button.matches('[data-reveal]'))return reveal();if(button.matches('[data-reveal-all]'))return reveal(true);
+  if(button.matches('[data-reveal]'))return reveal();if(button.matches('[data-reveal-all]')){close();return reveal(true);}
   if(button.matches('[data-next]'))return run(()=>command('reset',{roundId:crypto.randomUUID()}));
   if(button.matches('[data-reset]'))return confirm('Start a new round?','This clears these four topics and any private ranking. Your topic library stays.',async()=>{if(await run(()=>command('reset',{roundId:crypto.randomUUID()})))close();});
   if(button.matches('[data-confirm]')){const action=modalData;return action();}

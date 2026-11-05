@@ -29,6 +29,10 @@
   }else if(cmd.type==='rename-picker'){
    if(state.owner!==p.device)throw Error('Only the picker can change their name.');
    if(!text(p.name))throw Error('Enter your name first.');state.picker=text(p.name).slice(0,50);
+  }else if(cmd.type==='clear-name'){
+   if(!p.device)throw Error('This device could not be identified.');
+   if(state.owner===p.device)state.picker='';
+   if(state.guesses?.[p.device])state.guesses[p.device].name='Anonymous';
   }else if(cmd.type==='guessing'){
    if(state.phase!=='setup')throw Error('Change guessing mode before ranking starts.');
    state.guessesEnabled=Boolean(p.enabled);state.guesses={};

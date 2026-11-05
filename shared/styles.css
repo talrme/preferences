@@ -14,18 +14,26 @@
 .rank-tools{flex-direction:column;gap:2px}
 .rank-tools .icon{width:44px;min-width:44px;height:44px;min-height:44px;padding:8px;background:var(--soft)}
 .rank-tools svg{width:23px;height:23px}
-.player-controls{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px 12px;margin:0 0 22px}
+.player-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) auto;align-items:center;gap:8px;margin:0 0 18px}
+.player-controls:not(:has(.current-picker)){grid-template-columns:minmax(0,1fr) auto}
 .player-name{justify-self:start;min-width:0;overflow-wrap:anywhere;text-align:left}
 .player-name svg{width:15px}
 .picker-control{font-size:13px;max-width:210px}
-.current-picker{grid-column:1 / -1;text-align:right}
+.current-picker{font-size:11px;color:var(--muted);text-align:right;overflow-wrap:anywhere;min-width:0}
+.current-picker strong{font-weight:650;color:var(--ink)}
+.round-menu{color:var(--muted)}
+.option-actions{display:grid;gap:12px}
+.option-actions .toggle{padding:8px 0}
+.drag-ghost{opacity:.5}
+.sortable-fallback,.topic-tile.dragging{opacity:1!important;background:var(--tile);box-shadow:0 14px 32px #0004;border:2px solid var(--accent)}
 .guess-toggle{grid-column:1 / -1;margin-top:7px;font-size:12px}
 .guess-count{text-align:center;margin-top:12px}
 .guess-results{margin-top:24px;border-top:1px solid var(--line);padding-top:16px}
 .guess-results>div{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
 .guess-results span{overflow-wrap:anywhere;min-width:0}
 .guess-results strong{flex-shrink:0;color:var(--accent);font-size:13px}
-.round-progress{margin:0 0 2px}
+.round-progress{margin:26px 0 0;border-top:1px solid var(--line);padding-top:20px}
+.step-direction{margin:14px auto 0;text-align:center;font-size:12px;color:var(--muted);max-width:380px;min-height:35px}
 .round-progress ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));position:relative;isolation:isolate}
 .round-progress ol:before,.round-progress ol:after{content:'';position:absolute;top:12px;left:12.5%;height:2px;z-index:-1}
 .round-progress ol:before{width:75%;background:var(--line)}

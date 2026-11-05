@@ -1,12 +1,20 @@
 # Preferences: AI Handoff
 
+## Simplified Beginner Flow
+
+Current flow supersedes older top-progress/prominent-role-everywhere instructions. Top row is local name + shared Picker label (including owner) + one ellipsis Round options menu. Main game offers one primary next action: draw four -> I'm the picker -> Rank privately -> Ready -> Reveal -> Next round. Existing shuffle-all is a heading icon once populated; per-topic edit/shuffle remains. Optional guessing, picker takeover/hide, rerank and reveal-all live in Round options, not scattered beside the main action. Existing reducer/private-order and takeover protections remain unchanged. Progress circles, role-aware short instruction and New round link now follow the game. Dialog editing remains explicit-save.
+
+Name modal offers Remove my name and also accepts a blank normal Save. Name-required role/guess callbacks still validate nonempty Save. clear-name command clears only that device's picker display name and relabels its current-room guess Anonymous, retaining ownership, private order and guessed order. Local prefs.name becomes empty and survives refresh. This is not historical multi-room data deletion. UI shows Picker: Unnamed (you) or Picker: Unnamed when owner exists without a name. Watchers need no name. Same owner can hide/show view even after clearing name.
+
+Sortable fallback clone and dragging tile have opacity:1!important (overrides library inline opacity), accent border and shadow. Original ghost placeholder is .5 opacity. Tests assert actual touch-drag clone opacity, name-clear across two real browsers, and flow.cjs covers single main action, progress below game, menu placement, name-clear refresh and retained role. Screenshots in /tmp. No Firebase rule changes needed.
+
 ## Phone Topic Editors
 
 Topic editor dialogs (data-kind=item/topic) open near the top at widths up to600px, not vertically centered. Other dialogs and desktop editors stay centered. visualViewport resize/scroll updates CSS variables for visible height/top; flex header/footer stay visible while the body scrolls above the software keyboard. Keep explicit Save and cancel/backdrop behavior. No example placeholder in the round topic textarea. The library-save switch label is Save this option for future games as well; backend semantics unchanged. Browser tests can simulate keyboard-height viewport changes, not an actual physical keyboard.
 
 ## November 5: Picker And Optional Guesses
 
-Latest user requests supersede earlier no-guesses/Star/drag-handle directions. Visible role name is now picker. No A-D labels on unranked topics. Top player-controls has device-local name and prominent I'm the picker role control; setup select-picker keeps topic editing open, then Rank privately calls claim. Same-owner role control hides/shows private view locally. Mid-round takeover requires confirmation and reducer checks captured owner/round ID; select-picker gives a fresh round ID with same topics, clears reveals/guesses, and starts fresh local ranking. Never copy another device's order. New round clears owner. Names persist in preferences-ui-v1; renaming current owner updates shared picker display.
+Visible role name is picker. No A-D labels on unranked topics. Setup select-picker keeps topic editing open, then Rank privately calls claim. Same-owner role control hides/shows private view locally. Mid-round takeover requires confirmation and reducer checks captured owner/round ID; select-picker gives a fresh round ID with same topics, clears reveals/guesses, and starts fresh local ranking. Never copy another device's order. New round clears owner. Names persist in preferences-ui-v1; renaming current owner updates shared picker display. Controls were later reorganized as described above.
 
 Individual guesses is optional/off by default, selectable in setup. Preserve mode on reset; clear guesses. Draft order uses private key plus -guess and never writes on reorder. Explicit Save my guess stores guesses[device]={name,order} in the public room during ranking/discuss; lock at reveal. UI hides others' guesses until done, then correct positions/4 and Perfect match, no cumulative scoreboard. Submitted guesses are public database data, not protected like the picker ranking. Backward-compatible absent fields default to false/empty. Public rules already cover these fields; no deployment/rule changes required.
 
@@ -14,7 +22,7 @@ Whole-card Sortable dragging, no handles or long press, with touch-action:none o
 
 ## Progress And Resume Fix
 
-Keep internal picker/owner fields unchanged for existing room compatibility. Four non-interactive circle steps above the game: Choose (setup), Rank (ranking), Discuss (discuss), Reveal (reveal/done). aria-current=step tracks exactly one active step; done fills all circles. Always-visible New round above game requires existing reset confirmation, not a backend/library reset. No click-to-skip stages.
+Keep internal picker/owner fields unchanged for existing room compatibility. Four non-interactive circle steps below the game: Choose (setup), Rank (ranking), Discuss (discuss), Reveal (reveal/done). aria-current=step tracks exactly one active step; done fills all circles. Always-visible New round below progress requires existing reset confirmation, not a backend/library reset. No click-to-skip stages.
 
 Tab-return bug was B.open clearing B.room and repeating topic fetch + marker transaction + room transaction on every visibility return; overlapping opens also installed stale listeners. Now keep B.room for same-room reconnects, show only reconnecting status, cache SDK/seed initialization and per-room existence checks for page lifetime, and attach only listeners on resume. SDK initialization and open calls coalesce; generation tokens invalidate obsolete async work/callbacks on pause/new open. Cached snapshots never claim fresh status. Offline/online, visibility return, missing-listener focus and BFCache pageshow reconnect without reloading. Stop both listeners on permanent listener errors. No interval polling was introduced.
 
