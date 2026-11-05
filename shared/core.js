@@ -32,7 +32,7 @@
    if(p.takeover||(state.owner&&state.owner!==p.device)||state.phase!=='setup'){
     if(!p.takeover||p.expectedOwner!==state.owner||p.expectedRoundId!==state.roundId||(p.expectedPhase&&p.expectedPhase!==state.phase))throw Error('The picker changed. Please try again.');
     if(!p.roundId||p.roundId===state.roundId)throw Error('A takeover needs a new ranking.');
-    state.roundId=p.roundId;state.phase=state.phase==='setup'?'setup':'ranking';state.revealed=[];state.revealStarted=false;state.guesses={};
+    state.roundId=p.roundId;state.phase=state.phase==='setup'?'setup':'ranking';state.revealed=[];state.revealStarted=false;state.guesses={};delete state.discussionOrder;
    }
    state.owner=p.device;state.picker=text(p.name).slice(0,50);state.pickerAvatar=cleanAvatar(p.avatar);
   }else if(cmd.type==='profile'){
@@ -57,6 +57,12 @@
    if(!Array.isArray(p.order)||p.order.length!==4||new Set(p.order).size!==4||p.order.some(id=>!state.items.some(i=>i.id===id)))throw Error('Rank all four topics in your guess.');
    state.guesses||={};if(!state.guesses[p.device]&&Object.keys(state.guesses).length>=50)throw Error('This round already has 50 guesses.');
    state.guesses[p.device]={name:text(p.name).slice(0,50),avatar:cleanAvatar(p.avatar),order:[...p.order]};
+  }else if(cmd.type==='discussion-move'){
+   if(state.phase!=='discuss')throw Error('The group can only reorder topics during discussion.');
+   if(!p.device||p.expectedRoundId!==state.roundId)throw Error('The round changed. Please try again.');
+   const ids=discussionOrder(state);
+   if(!ids.includes(p.topicId)||(p.beforeId!==null&&!ids.includes(p.beforeId))||p.topicId===p.beforeId)throw Error('Choose a valid topic position.');
+   const next=ids.filter(id=>id!==p.topicId);next.splice(p.beforeId===null?next.length:next.indexOf(p.beforeId),0,p.topicId);state.discussionOrder=next;
   }else if(cmd.type==='claim'){
    if(state.phase!=='setup')throw Error('Someone is already ranking this round.');
    if(state.items.some(i=>!i.text))throw Error('Choose all four topics first.');
@@ -68,7 +74,7 @@
    if(state.owner!==p.device)throw Error('Only the picker can do that.');
    if(cmd.type==='back'){
     if((p.phase&&p.phase!==state.phase)||(p.expectedRoundId&&p.expectedRoundId!==state.roundId))throw Error('The step changed. Please try again.');
-    if(state.phase==='ranking'){state.phase='setup';state.guesses={};state.revealed=[];state.revealStarted=false;}
+    if(state.phase==='ranking'){state.phase='setup';state.guesses={};state.revealed=[];state.revealStarted=false;delete state.discussionOrder;}
     else if(state.phase==='discuss')state.phase='ranking';
     else if(state.phase==='reveal'){state.revealStarted=Boolean(state.revealStarted||state.revealed.length);state.phase='discuss';state.revealed=[];}
     else if(state.phase==='done'){state.phase='reveal';state.revealStarted=true;state.revealed=state.revealed.slice(0,-1);}
@@ -76,7 +82,7 @@
    }else if(cmd.type==='start-reveal'){
     if(state.phase!=='discuss')throw Error('Finish the discussion before moving to reveal.');state.phase='reveal';
    }else if(cmd.type==='ready'){
-    if(state.phase!=='ranking')throw Error('This round is not ready for that.');state.phase='discuss';
+    if(state.phase!=='ranking')throw Error('This round is not ready for that.');state.phase='discuss';state.discussionOrder=discussionOrder(state);
    }else if(cmd.type==='rerank'){
     if(state.phase!=='discuss'||state.revealed.length)throw Error('The reveal has already started.');state.phase='ranking';
    }else if(cmd.type==='reveal'){
@@ -98,6 +104,7 @@
   return result;
  }
  function privateOrder(room,saved){const ids=room.items.map(i=>i.id);return Array.isArray(saved)&&saved.length===4&&new Set(saved).size===4&&saved.every(id=>ids.includes(id))?[...saved]:ids;}
+ function discussionOrder(room){return privateOrder(room,room.discussionOrder);}
  function resetExpired(room,roundId,now=Date.now()){return expired(room,now)?apply(room,{type:'reset',payload:{roundId,expectedRevision:room.revision}},now):room;}
- const api={clone,text,normalized,initial,validateTopic,apply,draw,privateOrder,activityMillis,expired,resetExpired,idleLimit};root.PreferencesCore=api;if(typeof module!=='undefined')module.exports=api;
+ const api={clone,text,normalized,initial,validateTopic,apply,draw,privateOrder,discussionOrder,activityMillis,expired,resetExpired,idleLimit};root.PreferencesCore=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof globalThis==='undefined'?this:globalThis);

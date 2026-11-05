@@ -17,6 +17,10 @@
 }
 .ranking-list .topic-tile{touch-action:pan-y pinch-zoom;cursor:grab;user-select:none;-webkit-touch-callout:none}
 .ranking-list .topic-tile:active{cursor:grabbing}
+.discussion-list .topic-tile{touch-action:pan-y pinch-zoom;cursor:grab;user-select:none;-webkit-touch-callout:none;animation:none!important}
+.discussion-list .topic-tile:active{cursor:grabbing}
+body[data-design="1"] .topic-list.discussion-list{padding:0;gap:12px}
+body[data-design="1"] .topic-list.discussion-list .topic-tile:nth-child(n){rotate:none}
 .rank-tools{flex-direction:column;gap:2px}
 .rank-tools .icon{width:44px;min-width:44px;height:44px;min-height:44px;padding:8px;background:var(--soft)}
 .rank-tools svg{width:23px;height:23px}
@@ -183,6 +187,7 @@ body[data-palette=night] .step-error{color:#ffb1bf}
  .round-heading{margin-bottom:8px}
  body[data-design="1"] .topic-list:not(.ranking-list){padding:5px 6px 10px;gap:10px}
  .topic-list{gap:10px}
+ body[data-design="1"] .topic-list.discussion-list{gap:10px}
  body[data-design="1"] .topic-tile{min-height:56px;padding:6px 10px;gap:8px}
  .tile-text{font-size:16px;line-height:1.3}
  .rank-tools{flex-direction:row;gap:2px}
