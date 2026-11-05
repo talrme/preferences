@@ -24,8 +24,9 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
    for(const palette of ['design','citrus','ocean','rose','night'])for(const width of [320,390,1280]){
     await p.setViewportSize({width,height:900});await p.locator(`button[data-palette=${palette}]`).click();assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Page overflow '+i+' '+palette+' '+width);assert(await p.locator('#modal').evaluate(e=>e.scrollWidth<=e.clientWidth),'Modal overflow');
    }
-   for(const level of ['off','gentle','playful','ridiculous'])await p.locator('#motion').selectOption(level);
-   await p.locator('button[data-palette=design]').click();await p.locator('#motion').selectOption('off');await p.mouse.click(1,1);assert(!(await p.locator('#modal').isVisible()));
+   await p.locator('#settings-animations>summary').click();
+   for(const level of [0,1,2,3])await p.locator('#motion').fill(String(level));
+   await p.locator('#motion').fill('0');await p.locator('button[data-palette=design]').click();await p.mouse.click(1,1);assert(!(await p.locator('#modal').isVisible()));
    await p.setViewportSize({width:390,height:844});await p.locator('[data-draw]').click();await p.waitForFunction(()=>PreferencesTest.getPublic().items.every(i=>i.text));
    await p.evaluate(()=>window.scrollTo(0,0));await p.screenshot({path:`/tmp/preferences-${String(i).padStart(2,'0')}-phone.png`,fullPage:true});await p.setViewportSize({width:1280,height:900});await p.screenshot({path:`/tmp/preferences-${String(i).padStart(2,'0')}-desktop.png`,fullPage:true});
    await p.locator('[data-qr]').click();assert.equal(await p.locator('#share-qr canvas').count(),1);assert((await p.locator('#share-url').inputValue()).includes('room=test-'+i));assert(!(await p.locator('#share-url').inputValue()).includes('demo'));await p.locator('.close').click();
