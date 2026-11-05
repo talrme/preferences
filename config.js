@@ -1,0 +1,12 @@
+window.PREFERENCES_CONFIG={
+  firebase:{
+    apiKey:'AIzaSyAfvuT0NGn5pwxQACr7ScZm2ckwcCjQxOI',
+    authDomain:'preferences-57a92.firebaseapp.com',
+    projectId:'preferences-57a92',
+    storageBucket:'preferences-57a92.firebasestorage.app',
+    messagingSenderId:'481921762917',
+    appId:'1:481921762917:web:19646a4b882d13b90b688c'
+  },
+  environment:'main',
+  liveUrl:'https://talrme.github.io/preferences/'
+};

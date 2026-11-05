@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict'),C=require('../shared/core.js');
+const topics=Array.from({length:12},(_,i)=>({id:'t'+i,text:'Topic '+i,archived:false}));let state=C.initial('table','r1');
+const apply=(type,payload={})=>state=C.apply(state,{type,payload:{...payload,expectedRevision:state.revision}});
+assert.throws(()=>apply('claim',{device:'a'}),/four/);apply('items',{items:C.draw(topics,state.items,[0,1,2,3],[],()=>0)});assert.equal(new Set(state.items.map(i=>i.text)).size,4);
+const old=C.clone(state);apply('claim',{device:'a'});assert.throws(()=>apply('claim',{device:'b'}),/already/);assert.throws(()=>apply('items',{items:old.items}),/locked/);
+assert(!('ranking' in state));assert(!('order' in state));assert.throws(()=>apply('ready',{device:'b'}),/Only/);apply('ready',{device:'a'});
+apply('reveal',{device:'a',ids:['slot-3']});assert.equal(state.revealed.length,1);assert(!JSON.stringify(state).includes('secret'));assert.throws(()=>apply('reveal',{device:'a',ids:['slot-2','slot-3']}),/order/);
+apply('reveal',{device:'a',ids:['slot-3','slot-2','slot-1','slot-0']});assert.equal(state.phase,'done');const seen=state.seen;apply('reset',{roundId:'r2'});assert.equal(state.phase,'setup');assert.deepEqual(state.seen,seen);
+assert.throws(()=>C.apply(state,{type:'picker',payload:{name:'Wrong',expectedRevision:0}}),/changed/);assert.throws(()=>C.validateTopic(' '),/characters/);assert.throws(()=>C.validateTopic('x'.repeat(141)),/characters/);
+const drawn=C.draw(topics,state.items,[0,1,2,3],seen,()=>0);assert(drawn.every(i=>!seen.includes(i.topicId)));assert.throws(()=>C.draw([],state.items,[0]),/Not enough/);
+assert.deepEqual(C.privateOrder(state,['slot-0','slot-0','slot-0','slot-0']),state.items.map(i=>i.id));
+const groups=require('../shared/topics.json'),seed=Object.values(groups).flat();assert.equal(seed.length,200);assert.equal(new Set(seed.map(C.normalized)).size,200);
+console.log('PASS core: four distinct topics, lock/claim, private order absent from public state, incremental reveal, revision conflicts, reset/repeat avoidance, input validation, 200 unique starter topics.');
