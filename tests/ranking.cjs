@@ -3,7 +3,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
  const browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
  try{
   const c=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true,reducedMotion:'reduce'}),p=await c.newPage();
-  await p.goto('http://127.0.0.1:5196/?demo=1&room=drag-test');await p.locator('[data-draw]').click();await p.locator('[data-select-picker]').click();await p.locator('#player-name').fill('Tal');await p.locator('[data-save-name]').click();await p.locator('[data-claim]').click();await p.locator('.ranking-list').waitFor();
+  await p.goto('http://127.0.0.1:5196/?demo=1&room=drag-test');await p.locator('[data-draw]').click();await p.locator('[data-volunteer]').click();await p.locator('#player-name').fill('Tal');await p.locator('[data-save-name]').click();await p.locator('[data-claim]').click();await p.locator('.ranking-list').waitFor();
   assert.equal(await p.locator('.drag-handle').count(),0);const before=await p.evaluate(()=>PreferencesTest.getPrivate());
   const first=await p.locator('.ranking-list .tile-text').nth(0).boundingBox(),third=await p.locator('.ranking-list .tile-text').nth(2).boundingBox(),session=await c.newCDPSession(p),x=first.x+20,y=first.y+first.height/2,target=third.y+third.height/2;
   await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});
