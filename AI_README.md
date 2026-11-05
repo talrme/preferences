@@ -54,7 +54,7 @@ Sortable fallback clone and dragging tile have opacity:1!important (overrides li
 
 ## Phone Topic Editors
 
-Topic editor dialogs (data-kind=item/topic) open near the top at widths up to600px, not vertically centered. Other dialogs and desktop editors stay centered. visualViewport resize/scroll updates CSS variables for visible height/top; flex header/footer stay visible while the body scrolls above the software keyboard. Keep explicit Save and cancel/backdrop behavior. No example placeholder in the round topic textarea. The library-save switch label is Save this option for future games as well; backend semantics unchanged. Browser tests can simulate keyboard-height viewport changes, not an actual physical keyboard.
+Topic editor dialogs (data-kind=item/topic) open near the top at widths up to600px, not vertically centered. Other dialogs and desktop editors stay centered. visualViewport resize/scroll updates CSS variables for visible height/top; flex header/footer stay visible while the body scrolls above the software keyboard. Keep explicit Save and cancel/backdrop behavior. No example placeholder in the round topic textarea. The library-save switch label is Add this to the list of topics; backend semantics unchanged. Browser tests can simulate keyboard-height viewport changes, not an actual physical keyboard.
 
 ## November 5: Picker And Optional Guesses
 

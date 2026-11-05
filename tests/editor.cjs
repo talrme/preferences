@@ -3,7 +3,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
  const browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
  try{
   const p=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});await p.goto('http://127.0.0.1:5196/?demo=1&room=editor-test');await p.locator('.topic-tile').first().click({position:{x:24,y:24}});assert.equal(await p.locator('#modal-title').innerText(),'Add a Topic');
-  assert.equal(await p.locator('#item-text').getAttribute('placeholder'),null);assert.equal(await p.locator('#item-text').inputValue(),'');assert(await p.getByText('Save this option for future games as well',{exact:true}).isVisible());
+  assert.equal(await p.locator('#item-text').getAttribute('placeholder'),null);assert.equal(await p.locator('#item-text').inputValue(),'');assert(await p.getByText('Add this to the list of topics',{exact:true}).isVisible());
   for(const width of [320,390,600]){
    await p.setViewportSize({width,height:844});const rect=await p.locator('#modal').boundingBox();assert(rect.y>=0&&rect.y<30,'Phone editor opens at top');
    for(const palette of ['design','night']){
