@@ -2,10 +2,10 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
  try{
-  for(let i=1;i<=10;i++){
+  for(const i of [1]){
    const c=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'}),p=await c.newPage(),errors=[];
    p.on('pageerror',e=>errors.push(e.message));await c.route('**/firestore.googleapis.com/**',r=>{errors.push('Sandbox contacted Firebase');return r.abort();});
-   await p.goto(`http://127.0.0.1:5196/staging/${String(i).padStart(2,'0')}/?demo=1&room=test-${i}`);
+   await p.goto(`http://127.0.0.1:5196/?demo=1&room=test-${i}`);
    await p.waitForFunction(()=>document.querySelector('#connection').textContent.startsWith('Sandbox'));
    assert.equal(await p.locator('.topic-tile').count(),4);await p.locator('[data-draw]').click();
    await p.waitForFunction(()=>PreferencesTest.getPublic().items.every(i=>i.text));

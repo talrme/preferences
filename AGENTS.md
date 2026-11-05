@@ -1,6 +1,6 @@
 # Preferences Contributor Instructions
 
-Read README.md and AI_README.md. Edit shared sources and tools/page.html, then regenerate with tools/build.cjs. Keep ten designs functional without duplicating game logic.
+Read README.md and AI_README.md. Paper Bowl (option one) is promoted to the main page; the other designs and chooser are removed. Do not recreate them. Edit shared sources and tools/page.html, then regenerate with tools/build.cjs. staging/01/index.html is only a compatibility redirect.
 
 Preserve the real shared library/rooms and device-local private ranking. Never put unrevealed ranking in Firestore. Public read/write is explicitly requested, not a claim of secure authorization. Never reuse Huck's project.
 

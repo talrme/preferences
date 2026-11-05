@@ -1,16 +1,14 @@
 const fs=require('node:fs'),path=require('node:path'),sharp=require('sharp');
-const root=path.resolve(__dirname,'..');
-const designs=[['Paper Bowl','Little paper slips. A very opinionated bowl.'],['Clean Pop','Bright accents. Straight to the four topics.'],['Dinner Table','Four place cards, ready for a good argument.'],['Game Show','A little drama for the big reveal.'],['Sticker Book','Bold stickers. Strong opinions.'],['Night Table','Quiet lights, loud preferences.'],['Index Cards','A crisp little stack of things to debate.'],['Comic Strip','Four panels. One surprising protagonist.'],['Retro Terminal','An extremely unserious ranking machine.'],['Mobile Minimal','The four things. Almost nothing else.']];
-const esc=s=>s.replace(/&/g,'&amp;');
+const root=path.resolve(__dirname,'..'),version='20261105-horizontal';
 (async()=>{
- const bars='<rect x="0" y="0" width="512" height="512" rx="90" fill="#f3f7fb"/><rect x="78" y="266" width="68" height="160" rx="13" fill="#e8796d"/><rect x="174" y="174" width="68" height="252" rx="13" fill="#e3b641"/><rect x="270" y="226" width="68" height="200" rx="13" fill="#369b8b"/><rect x="366" y="86" width="68" height="340" rx="13" fill="#5381bc"/>';
+ const bars='<rect width="512" height="512" rx="90" fill="#f3f7fb"/>'+[
+  [86,78,340,'#e8796d'],[86,174,252,'#e3b641'],[86,270,300,'#369b8b'],[86,366,200,'#5381bc']
+ ].map(([x,y,width,color])=>`<rect x="${x}" y="${y}" width="${width}" height="68" rx="13" fill="${color}"/>`).join('');
  for(const [name,size] of [['icon-512.png',512],['icon-192.png',192],['apple-touch-icon.png',180],['favicon.png',32]])await sharp(Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512">'+bars+'</svg>')).resize(size,size).png().toFile(path.join(root,'shared',name));
- const template=fs.readFileSync(path.join(root,'tools/page.html'),'utf8');
- for(let i=1;i<=10;i++){
-  const dir=path.join(root,'staging',String(i).padStart(2,'0'));fs.mkdirSync(dir,{recursive:true});
-  fs.writeFileSync(path.join(dir,'index.html'),template.replaceAll('__DESIGN__',String(i)).replaceAll('__DESIGN_NAME__',esc(designs[i-1][0])));
-  fs.writeFileSync(path.join(dir,'manifest.webmanifest'),JSON.stringify({id:'./',name:'Preferences',short_name:'Preferences',start_url:'./?room=table',scope:'./',display:'standalone',background_color:'#f5f7fb',theme_color:'#247ba0',icons:[{src:'../../shared/icon-192.png',sizes:'192x192',type:'image/png'},{src:'../../shared/icon-512.png',sizes:'512x512',type:'image/png'}]},null,2));
- }
- fs.writeFileSync(path.join(root,'index.html'),`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Preferences · choose a design</title><link rel="icon" href="shared/favicon.png"><link rel="apple-touch-icon" href="shared/apple-touch-icon.png"><link rel="stylesheet" href="shared/chooser.css"></head><body><main><header><img src="shared/icon-192.png" width="40" height="40" alt=""><h1>Preferences</h1></header><p>Ten ways to bring four topics to the table.</p><div class="design-grid">${designs.map(([name,description],i)=>`<a class="design" data-design="${i+1}" href="staging/${String(i+1).padStart(2,'0')}/"><div class="preview"><img src="shared/icon-192.png" alt=""><div class="mini-slips"><span>Sleeping with socks on</span><span>Ice cream sandwiches</span><span>Long drives alone</span><span>Surprise parties</span></div></div><div class="design-label"><small>${String(i+1).padStart(2,'0')}</small><h2>${name}</h2><span>↗</span></div><p>${description}</p></a>`).join('')}</div></main></body></html>`);
- console.log('Built ten complete staging sites, chooser, install manifests and four-bar PNG icons.');
+ fs.writeFileSync(path.join(root,'index.html'),fs.readFileSync(path.join(root,'tools/page.html'),'utf8'));
+ fs.writeFileSync(path.join(root,'manifest.webmanifest'),JSON.stringify({id:'./',name:'Preferences',short_name:'Preferences',start_url:'./?room=table',scope:'./',display:'standalone',background_color:'#f5f6f2',theme_color:'#377765',icons:[{src:'shared/icon-192.png?v='+version,sizes:'192x192',type:'image/png'},{src:'shared/icon-512.png?v='+version,sizes:'512x512',type:'image/png'}]},null,2));
+ // Keep the selected design's old link usable without retaining a second app.
+ const legacy=path.join(root,'staging','01');fs.mkdirSync(legacy,{recursive:true});
+ fs.writeFileSync(path.join(legacy,'index.html'),'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Preferences</title></head><body><a href="../../">Open Preferences</a><script>const url=new URL("../../",location.href);url.search=location.search;url.hash=location.hash;location.replace(url.href);</script></body></html>');
+ console.log('Built Paper Bowl as the main game, horizontal-bar icons and the old option-one redirect.');
 })();

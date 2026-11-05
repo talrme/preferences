@@ -6,22 +6,9 @@
 
 A phone-first dinner-table game: four topics, one person's private ranking, and everyone else arguing about what it will be. No scoring, individual guesses, timers or player registration.
 
-## Pick A Design
+## Current Design
 
-The root website is a chooser for ten fully functioning visual designs. They share the **same real rooms and permanent topic library**, not ten isolated databases. Only appearances differ. After choosing one, it can be promoted without migrating the library or rooms.
-
-| Option | Design | Open |
-| --- | --- | --- |
-| 1 | Paper Bowl | [Play](https://talrme.github.io/preferences/staging/01/) |
-| 2 | Clean Pop | [Play](https://talrme.github.io/preferences/staging/02/) |
-| 3 | Dinner Table | [Play](https://talrme.github.io/preferences/staging/03/) |
-| 4 | Game Show | [Play](https://talrme.github.io/preferences/staging/04/) |
-| 5 | Sticker Book | [Play](https://talrme.github.io/preferences/staging/05/) |
-| 6 | Night Table | [Play](https://talrme.github.io/preferences/staging/06/) |
-| 7 | Index Cards | [Play](https://talrme.github.io/preferences/staging/07/) |
-| 8 | Comic Strip | [Play](https://talrme.github.io/preferences/staging/08/) |
-| 9 | Retro Terminal | [Play](https://talrme.github.io/preferences/staging/09/) |
-| 10 | Mobile Minimal | [Play](https://talrme.github.io/preferences/staging/10/) |
+**Paper Bowl (option one)** is now the main website. The chooser, other nine designs and their staging assets have been removed. The old option-one URL is a small redirect to the main game that preserves the room/query; it is not a second app. Existing rooms, the permanent topic library and device-local private rankings use the same keys/backend as before, with no data migration or reset.
 
 ## Playing
 
@@ -47,7 +34,7 @@ Draws avoid current duplicates and prefer topics not recently used in the room. 
 
 Settings has Appearance, Room and Advanced groups. Color choices and **Off / Gentle / Playful / Ridiculous** animation levels apply immediately and save on this device. OS reduced motion is respected. No sound plays. Modals are centered; X, Escape and clicking outside close them. Draft text is saved only by its explicit Save button.
 
-The four-color vertical-bar PNG is the favicon, home-screen icon and header icon. Share / Save has room link copying, a locally generated QR and iPhone/Android installation instructions. The game dynamically creates a room-specific install manifest. Installed shortcuts are still websites, not separate data stores. Check your phone's installed shortcut opens the intended room; OS installation behavior can vary.
+The four-color **horizontal-bar PNG**, like four ranked preferences, is the favicon, home-screen icon and header icon. Icon URLs are versioned to refresh caches; an already-installed phone shortcut might need removing and re-adding to replace its old artwork. Share / Save has room link copying, a locally generated QR and iPhone/Android installation instructions. The game dynamically creates a room-specific install manifest. Installed shortcuts are still websites, not separate data stores. Check your phone's installed shortcut opens the intended room; OS installation behavior can vary.
 
 ## Backend: Already Configured
 
@@ -91,7 +78,7 @@ service cloud.firestore {
 6. In Project overview, click the web app button `</>` and name the app Preferences Web.
 7. Leave Firebase Hosting off. Click Register app.
 8. Copy the displayed `firebaseConfig` object into `config.js` as `firebase`, replacing the previous project's object. No service account/private key is required or should be committed.
-9. Open a staging game. It creates the 200-topic starter library and default room once, automatically. Two people can initialize concurrently without duplicate seeds.
+9. Open the main game. It creates the 200-topic starter library and default room once, automatically. Two people can initialize concurrently without duplicate seeds.
 10. Test a room on two phones. A shared change should appear without a manual refresh. If access is denied, recheck the published rules and project ID; merely saving a rule draft is insufficient.
 
 ## GitHub Pages
@@ -100,7 +87,7 @@ service cloud.firestore {
 2. Push this directory to its `main` branch. Build output is committed; there is no npm/build action required for hosting.
 3. In the GitHub repo, open Settings → Pages.
 4. Choose Deploy from a branch, then main and /(root), and click Save.
-5. Wait for the Pages deployment. The chooser is at the live link above, with ten staging paths. GitHub publishing is separate from Firebase rules publishing.
+5. Wait for the Pages deployment. The main Paper Bowl game is at the live link above. GitHub publishing is separate from Firebase rules publishing.
 
 ## Local Development And Tests
 
@@ -111,17 +98,18 @@ node tools/build.cjs
 node tools/serve.cjs
 ```
 
-Open [the local chooser](http://127.0.0.1:5196/). Build requires `sharp`; browser tests require `playwright` and desktop Chrome. The Codex bundled Node runtime provides these through NODE_PATH; deployed pages have no Node dependency.
+Open [the local game](http://127.0.0.1:5196/). Build requires `sharp`; browser tests require `playwright` and desktop Chrome. The Codex bundled Node runtime provides these through NODE_PATH; deployed pages have no Node dependency.
 
 ```sh
 node tests/core.test.cjs
 node tests/browser.cjs
 node tests/firestore.cjs
+node tests/promotion.cjs
 ```
 
 Add `?demo=1` to a game URL for a clearly labeled, device-local sandbox. It uses a separate storage namespace, never imports the Firebase SDK, and never changes shared topics/rooms. QR/share/install links omit demo mode so they do not invite friends into a disconnected sandbox.
 
-The core tests validate the game state machine and200 unique starter topics. Browser tests run full rounds/library CRUD/settings/QR/private refresh across all ten designs at320/390/1280 widths. Firestore tests use unique `test-TIMESTAMP` environments in this new project and delete **only those** afterward. They test two-browser cross-design updates, private reorder without shared writes, incremental reveal, topic CRUD/restore and concurrent picker claims. They are not physical-phone tests. Screenshots are saved under /tmp, not committed.
+The core tests validate the game state machine and200 unique starter topics. Browser tests run full rounds/library CRUD/settings/QR/private refresh on the main game at320/390/1280 widths. Firestore tests use unique `test-TIMESTAMP` environments and delete **only those** afterward. They test two-browser updates, private reorder without shared writes, incremental reveal, topic CRUD/restore and concurrent picker claims. Promotion tests verify horizontal icon pixels, the root manifest/share paths, preserved rankings and old option-one redirects. They are not physical-phone tests. Screenshots are saved under /tmp, not committed.
 
 ## Assets And Dependencies
 

@@ -5,16 +5,16 @@
   "start_url": "./?room=table",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f5f7fb",
-  "theme_color": "#247ba0",
+  "background_color": "#f5f6f2",
+  "theme_color": "#377765",
   "icons": [
     {
-      "src": "../../shared/icon-192.png",
+      "src": "shared/icon-192.png?v=20261105-horizontal",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "../../shared/icon-512.png",
+      "src": "shared/icon-512.png?v=20261105-horizontal",
       "sizes": "512x512",
       "type": "image/png"
     }
