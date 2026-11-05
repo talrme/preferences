@@ -3,13 +3,16 @@
  const clone=value=>JSON.parse(JSON.stringify(value));
  const text=value=>String(value||'').trim().replace(/\s+/g,' ');
  const normalized=value=>text(value).toLocaleLowerCase();
- function initial(id,roundId){return {id,roundId,revision:0,phase:'setup',picker:'',owner:null,items:[0,1,2,3].map(i=>({id:'slot-'+i,text:'',topicId:null})),revealed:[],seen:[],guessesEnabled:false,guesses:{}};}
+ const idleLimit=12*60*60*1000;
+ function activityMillis(room){const value=room.lastActivityAt;return typeof value==='number'&&Number.isFinite(value)?value:value&&Number.isFinite(value.seconds)?value.seconds*1000+(value.nanoseconds||0)/1e6:null;}
+ function expired(room,now=Date.now()){const time=activityMillis(room);return time!==null&&now-time>=idleLimit;}
+ function initial(id,roundId,now=Date.now()){return {id,roundId,revision:0,phase:'setup',picker:'',owner:null,items:[0,1,2,3].map(i=>({id:'slot-'+i,text:'',topicId:null})),revealed:[],seen:[],guessesEnabled:false,guesses:{},lastActivityAt:now};}
  function validateTopic(value){const clean=text(value);if(!clean||clean.length>140)throw Error('Use 1–140 characters for a topic.');return clean;}
- function apply(source,cmd){
+ function apply(source,cmd,now=Date.now()){
   const state=clone(source),p=cmd.payload||{};
   if(p.expectedRevision!==state.revision)throw Error('Someone just changed this round. Please try again.');
   if(cmd.type==='reset'){
-   const next=initial(state.id,p.roundId);next.seen=state.seen;next.guessesEnabled=Boolean(state.guessesEnabled);next.revision=state.revision+1;return next;
+   const next=initial(state.id,p.roundId,now);next.seen=state.seen;next.guessesEnabled=Boolean(state.guessesEnabled);next.revision=state.revision+1;return next;
   }
   if(cmd.type==='items'){
    if(state.phase!=='setup')throw Error('This round is locked. Start a new round to change the topics.');
@@ -61,7 +64,7 @@
     state.revealed=ids;state.phase=ids.length===4?'done':'reveal';
    }else throw Error('Unknown action.');
   }
-  state.revision++;return state;
+  state.lastActivityAt=now;state.revision++;return state;
  }
  function draw(topics,items,indexes,seen=[],random=Math.random){
   const result=clone(items),keep=items.filter((_,i)=>!indexes.includes(i)),blocked=new Set(keep.map(i=>normalized(i.text))),seenSet=new Set(seen);
@@ -74,5 +77,6 @@
   return result;
  }
  function privateOrder(room,saved){const ids=room.items.map(i=>i.id);return Array.isArray(saved)&&saved.length===4&&new Set(saved).size===4&&saved.every(id=>ids.includes(id))?[...saved]:ids;}
- const api={clone,text,normalized,initial,validateTopic,apply,draw,privateOrder};root.PreferencesCore=api;if(typeof module!=='undefined')module.exports=api;
+ function resetExpired(room,roundId,now=Date.now()){return expired(room,now)?apply(room,{type:'reset',payload:{roundId,expectedRevision:room.revision}},now):room;}
+ const api={clone,text,normalized,initial,validateTopic,apply,draw,privateOrder,activityMillis,expired,resetExpired,idleLimit};root.PreferencesCore=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof globalThis==='undefined'?this:globalThis);

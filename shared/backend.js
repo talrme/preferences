@@ -27,7 +27,7 @@
   B.status=navigator.onLine===false?'offline':B.room?'reconnecting':'loading';changed();
   const work=(async()=>{
   if(!live){
-   const topics=await seedTopics();await localUpdate(state=>{if(!state.initialized){state.topics=topics;state.initialized=true;}state.rooms[id]||=C.initial(id,crypto.randomUUID());});
+   const topics=await seedTopics();await localUpdate(state=>{if(!state.initialized){state.topics=topics;state.initialized=true;}state.rooms[id]||=C.initial(id,crypto.randomUUID());state.rooms[id]=C.resetExpired(state.rooms[id],crypto.randomUUID());if(C.activityMillis(state.rooms[id])===null)state.rooms[id].lastActivityAt=Date.now();});
    channel||=new BroadcastChannel(storageKey);channel.onmessage=localRefresh;return;
   }
   if(!context){contextPromise||=firebase().catch(error=>{contextPromise=null;throw error;});context=await contextPromise;}
@@ -41,9 +41,9 @@
   })().catch(error=>{seedPromise=null;throw error;});
   await seedPromise;if(session!==generation||document.hidden)return;
   const ref=sdk.doc(rooms,id);
-  if(!initializedRooms.has(id)){await sdk.runTransaction(db,async tx=>{if(!(await tx.get(ref)).exists())tx.set(ref,C.initial(id,crypto.randomUUID()));});initializedRooms.add(id);}
+  if(!initializedRooms.has(id)){await sdk.runTransaction(db,async tx=>{if(!(await tx.get(ref)).exists())tx.set(ref,{...C.initial(id,crypto.randomUUID()),lastActivityAt:sdk.serverTimestamp()});});initializedRooms.add(id);}
   if(session!==generation||document.hidden)return;
-  let roomReady=false,topicsReady=false;
+  let roomReady=false,topicsReady=false,expiryPending=false;
   const ready=()=>{B.status=roomReady&&topicsReady?'live':B.room?'reconnecting':'loading';if(B.status==='live')B.error='';changed();};
   const cached=()=>{if(B.room){B.status=navigator.onLine===false?'offline':'reconnecting';changed();}};
   const failed=error=>{if(session!==generation)return;generation++;stopListeners();B.status='error';B.error=error.message;changed();};
@@ -51,7 +51,17 @@
    if(session!==generation)return;
    if(snapshot.metadata.fromCache||snapshot.metadata.hasPendingWrites){if(!snapshot.metadata.hasPendingWrites)cached();return;}
    if(!snapshot.exists()){failed(Error('This room was removed. Create or join another room.'));return;}
-   const next=snapshot.data();if(!B.room||next.revision>=B.room.revision)B.room=next;roomReady=true;ready();
+   const next=snapshot.data();
+   if(C.expired(next)||C.activityMillis(next)===null){
+    if(!expiryPending){expiryPending=true;sdk.runTransaction(db,async tx=>{
+     const current=await tx.get(ref);if(!current.exists())return;
+     const source=current.data(),reset=C.resetExpired(source,crypto.randomUUID());
+     if(reset!==source)tx.set(ref,{...reset,lastActivityAt:sdk.serverTimestamp()});
+     else if(C.activityMillis(source)===null)tx.update(ref,{lastActivityAt:sdk.serverTimestamp()});
+    }).catch(failed).finally(()=>{expiryPending=false;});}
+    return;
+   }
+   if(!B.room||next.revision>=B.room.revision)B.room=next;roomReady=true;ready();
   },failed));
   unsubscribers.push(sdk.onSnapshot(topics,{includeMetadataChanges:true},snapshot=>{
    if(session!==generation)return;
@@ -62,10 +72,10 @@
   opening=work;const done=()=>{if(opening===work)opening=null;};work.then(done,done);return work;
  };
  B.command=async command=>{
-  if(!live)return localUpdate(state=>{state.rooms[roomId]=C.apply(state.rooms[roomId],command);return state.rooms[roomId];});
+  if(!live){let stale=false;const result=await localUpdate(state=>{const source=state.rooms[roomId],reset=C.resetExpired(source,crypto.randomUUID());stale=reset!==source;state.rooms[roomId]=stale?reset:C.apply(source,command);return state.rooms[roomId];});if(stale)throw Error('This round was inactive for 12 hours. Start a new game.');return result;}
   const {sdk,db,rooms}=context,ref=sdk.doc(rooms,roomId);
-  const result=await sdk.runTransaction(db,async tx=>{const source=(await tx.get(ref)).data();if(!source)throw Error('Room unavailable. Refresh and try again.');const next=C.apply(source,command);tx.set(ref,next);return next;});
-  if(!B.room||result.revision>=B.room.revision)B.room=result;changed();return result;
+  const result=await sdk.runTransaction(db,async tx=>{const source=(await tx.get(ref)).data();if(!source)throw Error('Room unavailable. Refresh and try again.');const reset=C.resetExpired(source,crypto.randomUUID()),stale=reset!==source,next=stale?reset:C.apply(source,command);tx.set(ref,{...next,lastActivityAt:sdk.serverTimestamp()});return {room:next,stale};});
+  if(!B.room||result.room.revision>=B.room.revision)B.room=result.room;changed();if(result.stale)throw Error('This round was inactive for 12 hours. Start a new game.');return result.room;
  };
  B.topic=async draft=>{
   const id=draft.id||'topic-'+crypto.randomUUID(),text=C.validateTopic(draft.text),category=C.text(draft.category||'From the table').slice(0,40);
@@ -83,5 +93,5 @@
  window.addEventListener('online',()=>{if(live&&!document.hidden)reconnect();});
  window.addEventListener('focus',()=>{if(live&&!document.hidden&&!unsubscribers.length)reconnect();});
  window.addEventListener('pageshow',event=>{if(live&&event.persisted&&!document.hidden)reconnect();});
- document.addEventListener('visibilitychange',()=>{if(!live)return;if(document.hidden)B.pause();else reconnect();});
+ document.addEventListener('visibilitychange',()=>{if(document.hidden){if(live)B.pause();}else reconnect();});
 })();

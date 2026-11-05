@@ -10,7 +10,7 @@
  if(!['design','citrus','ocean','rose','night'].includes(prefs.palette))prefs.palette='design';
  if(!['off','gentle','playful','ridiculous'].includes(prefs.motion))prefs.motion='playful';
  let device=localStorage.getItem(deviceKey);if(!device){device=crypto.randomUUID();localStorage.setItem(deviceKey,device);}
- let busy=false,sorter=null,signature='',lastPhase='',topicSearch='',topicFilter='active',modalKind='',modalData=null,noticeTimer,pickerVisible=true,guessEditing=false,dragging=false;
+ let busy=false,sorter=null,signature='',lastPhase='',lastRoundId=null,topicSearch='',topicFilter='active',modalKind='',modalData=null,noticeTimer,pickerVisible=true,guessEditing=false,dragging=false;
  const icons=()=>lucide.createIcons(),glyph=(name,label)=>`<i data-lucide="${name}"${label?` aria-label="${label}"`:''}></i>`;
  const savePrefs=()=>{localStorage.setItem(prefKey,JSON.stringify(prefs));document.body.dataset.palette=prefs.palette;document.body.dataset.motion=prefs.motion;};savePrefs();
  const key=()=>`preferences-private-${isSandbox?'sandbox':PREFERENCES_CONFIG.environment}-${roomId}-${B.room.roundId}`;
@@ -50,6 +50,8 @@
   if(!B.room){$('#game').innerHTML=`<div class="loading-bars" aria-label="Loading"><span></span><span></span><span></span><span></span></div>${B.status==='error'?'<button data-retry>Retry connection</button>':''}`;return;}
   if(dragging)return;
   const room=B.room;
+  if(lastRoundId&&lastRoundId!==room.roundId){pickerVisible=true;guessEditing=false;if($('#modal').open&&!['topics','topic','settings','share'].includes(modalKind))close();window.scrollTo(0,0);}
+  lastRoundId=room.roundId;
   if(!['ranking','discuss'].includes(room.phase)||mine())guessEditing=false;
   const ranking=(mine()&&pickerVisible&&room.phase==='ranking')||guessEditing;
   // Firestore map key order can change on reconnect without any actual game change.
