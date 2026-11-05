@@ -9,8 +9,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
   await p.locator('.item-library summary').click();const choices=p.locator('[data-pick-topic]');assert.equal(await choices.count(),200);
   assert(await p.locator('.item-library-results').evaluate(el=>el.scrollHeight>el.clientHeight));
   const selected=await choices.first().getAttribute('data-pick-topic'),text=await choices.first().locator('span').innerText();const title=text.split('\n')[0];
-  await p.locator('#item-library-search').fill('zzzz-no-match');assert.equal(await choices.count(),0);assert(await p.getByText('No matching topics.',{exact:true}).isVisible());
-  await p.locator('#item-library-search').fill(title);assert(await choices.count()>0);await p.locator(`[data-pick-topic="${selected}"]`).click();assert.equal(await p.locator('#item-text').inputValue(),title);assert.deepEqual(await p.evaluate(()=>PreferencesTest.getPublic()),before,'Picking only changes the draft');
+  assert.equal(await p.locator('.item-library input[type=search]').count(),0);assert.equal(await choices.locator('span small').count(),0);await p.locator(`[data-pick-topic="${selected}"]`).click();assert.equal(await p.locator('#item-text').inputValue(),title);assert.deepEqual(await p.evaluate(()=>PreferencesTest.getPublic()),before,'Picking only changes the draft');
   await p.locator('[data-save-item]').click();await p.locator('#modal').waitFor({state:'hidden'});assert.equal(await p.evaluate(()=>PreferencesTest.getPublic().items[0].topicId),selected);
   await p.locator('[data-edit-item="1"]').click();await p.locator('.item-library summary').click();assert(await p.locator(`[data-pick-topic="${selected}"]`).isDisabled());
   for(const width of [320,390,1280])for(const palette of ['design','night','citrus','ocean','rose']){
@@ -21,6 +20,6 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
   await p.locator('#item-text').fill('Uncommitted change');await p.keyboard.press('Escape');assert.equal(await p.evaluate(()=>PreferencesTest.getPublic().items[1].text),'');
   await p.evaluate(()=>document.body.dataset.palette='design');await p.screenshot({path:'/tmp/preferences-toggle-off-phone.png'});
   await role.click();await p.locator('#player-name').fill('Tal');await p.locator('[data-save-name]').click();await p.waitForFunction(()=>document.querySelector('[data-volunteer]').getAttribute('aria-pressed')==='true');await p.screenshot({path:'/tmp/preferences-toggle-on-phone.png'});
-  console.log('PASS library browse/search/scroll/duplicates, draft-only selection, explicit Save/Cancel, library ID retention, toggle on/off visuals, 320/390/1280 and all palettes.');
+  console.log('PASS names-only library without search, scroll/duplicates, draft-only selection, explicit Save/Cancel, library ID retention, toggle on/off visuals, 320/390/1280 and all palettes.');
  }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

@@ -126,7 +126,6 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px soli
 .ranker-choice.selected .ranker-switch>span{transform:translateX(14px);background:var(--accent-ink)}
 .item-library{margin:4px 0 12px}
 .item-library summary{color:var(--accent);font-size:13px;min-height:44px;cursor:pointer}
-.item-library input{width:100%;margin:0 0 8px}
 .item-library-results{max-height:230px;max-height:min(230px,30dvh);overflow-y:auto;overscroll-behavior:contain;display:grid;gap:4px;padding:3px;scrollbar-width:thin}
 .item-library-option{width:100%;text-align:left;justify-content:space-between;font-size:13px;font-weight:500;padding:10px 12px;min-height:46px;background:var(--soft);flex-shrink:0;overflow-wrap:anywhere}
 .item-library-option>span{min-width:0}
