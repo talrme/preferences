@@ -32,7 +32,7 @@
   try{await fn();return true;}catch(error){toast(error.code==='permission-denied'?'Database access is blocked. Check Firebase rules, then retry.':error.message);return false;}finally{busy=false;options.forEach(([el,disabled])=>el.disabled=disabled);signature='';render();}
  }
  async function command(type,payload={}){return B.command({type,payload:{...payload,expectedRevision:B.room.revision}});}
- function renderStatus(){const state=B.status;$('#connection').className='connection '+state;$('#connection').textContent=busy?'Saving…':state==='live'?'Live with your table':state==='sandbox'?'Sandbox · only on this device':state==='local'?'On this device · sharing is not connected':state==='reconnecting'?'Reconnecting with your table…':state==='offline'?'Offline · shared changes need a connection':state==='error'?'Not connected · '+(B.error||'retry in Settings'):'Connecting…';}
+ function renderStatus(){const state=B.status,node=$('#connection');node.className='connection '+state;node.hidden=state==='live'||state==='loading';node.textContent=state==='live'?'':state==='sandbox'?'Sandbox · only on this device':state==='local'?'On this device · sharing is not connected':state==='reconnecting'?'Reconnecting with your table…':state==='offline'?'Offline · shared changes need a connection':state==='error'?'Not connected · '+(B.error||'retry in Settings'):'';}
  function renderProgress(){
   $('.new-round').disabled=busy||!B.room;
   const phase=B.room?.phase,index=({setup:0,ranking:1,discuss:2,reveal:3,done:3})[phase]??0;

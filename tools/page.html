@@ -5,11 +5,11 @@
  <meta name="description" content="Four topics. One person's ranking. A whole table of opinions.">
  <meta property="og:title" content="Preferences"><meta property="og:description" content="Four topics. One person's ranking. A whole table of opinions."><meta property="og:image" content="https://talrme.github.io/preferences/shared/icon-512.png?v=20261105-horizontal"><meta property="og:type" content="website">
  <link rel="icon" type="image/png" href="shared/favicon.png?v=20261105-horizontal"><link rel="apple-touch-icon" href="shared/apple-touch-icon.png?v=20261105-horizontal"><link rel="manifest" href="manifest.webmanifest?v=20261105">
- <link rel="stylesheet" href="shared/designs.css?v=20261105"><link rel="stylesheet" href="shared/styles.css?v=20261105-steps">
+ <link rel="stylesheet" href="shared/designs.css?v=20261105"><link rel="stylesheet" href="shared/styles.css?v=20261105-compact-header">
 </head><body data-design="1">
  <main class="app">
   <header class="topbar"><div class="identity"><img src="shared/icon-192.png?v=20261105-horizontal" alt="" width="34" height="34"><h1>Preferences</h1></div><button class="room-link" data-room title="Room settings"><i data-lucide="users-round"></i><span id="room-label">Table</span></button></header>
-  <p class="connection" id="connection" role="status">Opening the table…</p>
+  <p class="connection" id="connection" role="status" hidden></p>
   <section class="player-controls" id="player-controls" aria-label="Your name and picker role"></section>
   <section class="game" id="game" aria-label="Current round"></section>
   <nav class="round-progress" aria-label="Round progress"><ol id="progress-steps" style="--stage:0"><li><span class="step-circle">1</span><span>Choose</span></li><li><span class="step-circle">2</span><span>Rank</span></li><li><span class="step-circle">3</span><span>Discuss</span></li><li><span class="step-circle">4</span><span>Reveal</span></li></ol><p id="step-direction" class="step-direction" aria-live="polite"></p></nav>
@@ -18,5 +18,5 @@
  </main>
  <dialog id="modal"><header class="modal-head"><h2 id="modal-title"></h2><button class="icon close" data-close aria-label="Close"><i data-lucide="x"></i></button></header><div class="modal-body" id="modal-body"></div><footer class="modal-footer" id="modal-footer"></footer></dialog>
  <div class="toast" id="toast" hidden role="status"></div><div id="confetti" aria-hidden="true"></div>
- <script src="config.js"></script><script src="shared/vendor/lucide.min.js"></script><script src="shared/vendor/sortable.min.js"></script><script src="shared/vendor/qrcode.min.js"></script><script src="shared/core.js?v=20261105-steps"></script><script src="shared/backend.js?v=20261105-idle"></script><script src="shared/app.js?v=20261105-steps"></script>
+ <script src="config.js"></script><script src="shared/vendor/lucide.min.js"></script><script src="shared/vendor/sortable.min.js"></script><script src="shared/vendor/qrcode.min.js"></script><script src="shared/core.js?v=20261105-steps"></script><script src="shared/backend.js?v=20261105-idle"></script><script src="shared/app.js?v=20261105-compact-header"></script>
 </body></html>

@@ -5,7 +5,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
   async function device(){const c=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});contexts.push(c);await c.route('**/config.js',r=>r.fulfill({contentType:'application/javascript',body:fs.readFileSync(path.join(__dirname,'../config.js'),'utf8')+`\nPREFERENCES_CONFIG.environment=${JSON.stringify(environment)};`}));const p=await c.newPage(),requests={seed:0,transactions:0};p.on('request',r=>{if(r.url().includes('/shared/topics.json'))requests.seed++;if(/:batchGet|:commit/.test(r.url()))requests.transactions++;});p.on('pageerror',e=>errors.push(e.message));await p.goto(`http://127.0.0.1:5196/?room=integration`);await p.waitForFunction(()=>PreferencesBackend.status==='live',null,{timeout:45000});return {p,c,requests};}
   const a=await device(),b=await device();assert.equal(await a.p.evaluate(()=>PreferencesTest.getTopics().length),200);
   await a.p.locator('[data-draw]').click();await b.p.waitForFunction(()=>PreferencesTest.getPublic().items.every(i=>i.text));
-  await a.p.waitForFunction(()=>document.querySelector('#connection').textContent==='Live with your table');
+  await a.p.waitForFunction(()=>PreferencesBackend.status==='live'&&document.querySelector('#connection').hidden);assert(!(await a.p.locator('#connection').isVisible()));assert(await a.p.evaluate(()=>document.querySelector('#player-controls').getBoundingClientRect().top-document.querySelector('.topbar').getBoundingClientRect().bottom<=16),'No reserved subtitle gap');
   // Returning to a tab must not clear the game, rerun seed checks or erase a draft.
   await a.p.locator('[data-edit-item="0"]').click();await a.p.locator('#item-text').fill('Unsaved draft survives a tab switch');
   const before={...a.requests};
@@ -20,7 +20,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
   const retained=await a.p.evaluate(()=>({sameList:window.retainedList===document.querySelector('#topic-list'),sawLoader:window.sawLoader}));assert(retained.sameList&&!retained.sawLoader,JSON.stringify(retained));
   assert.equal(a.requests.seed,before.seed);assert.equal(a.requests.transactions,before.transactions,'Resume should only reconnect listeners, not rerun initialization transactions');
   await a.p.evaluate(()=>{delete document.hidden;resumeObserver.disconnect();});await a.p.locator('.close').click();
-  await a.c.setOffline(true);await a.p.waitForFunction(()=>PreferencesBackend.status==='offline');
+  await a.c.setOffline(true);await a.p.waitForFunction(()=>PreferencesBackend.status==='offline');assert(await a.p.locator('#connection').isVisible());
   await a.p.evaluate(()=>{PreferencesBackend.pause();return PreferencesBackend.open('integration');});assert.equal(await a.p.locator('.loading-bars').count(),0);
   await a.c.setOffline(false);await a.p.waitForFunction(()=>PreferencesBackend.status==='live',null,{timeout:45000});
   await a.p.locator('[data-round-options]').click();await a.p.locator('#guessing').check();await a.p.waitForFunction(()=>PreferencesTest.getPublic().guessesEnabled);await a.p.locator('.close').click();await a.p.locator('#game [data-select-picker]').click();await a.p.locator('#player-name').fill('Tal');await a.p.locator('[data-save-name]').click();await a.p.locator('[data-claim]').click();await b.p.waitForFunction(()=>PreferencesTest.getPublic().phase==='ranking');assert.equal(await b.p.locator('.ranking-list').count(),0);

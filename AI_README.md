@@ -1,5 +1,9 @@
 # Preferences: AI Handoff
 
+## Compact Header
+
+Do not show Live with your table or a Saving subtitle in healthy shared mode. #connection is hidden/empty for live/loading, with no reserved layout space; topbar keeps12px breathing room before player controls. Keep reconnecting, offline/error and sandbox/local-only status visible so failed sync or disconnected testing is never disguised. Initial HTML status is hidden to prevent a flash of obsolete text. Firestore test checks healthy status hidden, compact gap and offline notice visible. No backend behavior changed.
+
 ## Explicit Back/Next Navigation
 
 Latest request supersedes the single-action-only screen. Visible role terminology is Ranker, while picker/owner field names and storage keys stay unchanged. Each stage has a compact above-topic notice, current task controls, and a Back/Next navigation row below topics. Setup offers volunteer/select ranker, draw/manual topics and Next: rank privately (disabled until all four chosen). Owner ranking -> Done ranking: discuss -> Done discussing: reveal (new start-reveal command, enters reveal with zero answers) -> individual reveals -> Next round. Progress remains below navigation, not a clickable stage selector. Stage transitions scroll to top. Spectators get named ranking/waiting banner, optional Make/Edit my guess in that banner, and disabled shared navigation. No misleading invitation to submit guesses when optional guessing is off. Local guess editing has Back/Save that never advances shared phase.
