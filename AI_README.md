@@ -1,5 +1,7 @@
 # Preferences: AI Handoff
 
+Top-right profile name/avatar must not be underlined. .topbar .header-name overrides the shared .text-link decoration; preserve click/focus behavior and do not remove underlines globally. Header/footer tests assert normal and hovered decoration is none.
+
 ## Visible Ranker Control And Handwritten Reminder
 
 Latest request: #player-controls is always visible once a room loads. .ranker-toolbar puts the shared ranker label on the left (when owned), and an always-visible upper-right I'm the ranker button (data-volunteer) plus info icon on the right, directly below the unchanged profile header. data-volunteer for non-owner uses existing selectPicker/name/takeover logic; for owner opens rankerInfo and never toggles/hides private ranking. Selection is indicated with check/accent. Info explains role and secrecy, with standard Close/X/Escape/backdrop handling and no room writes. Existing Round options hide/show shortcut still works independently.

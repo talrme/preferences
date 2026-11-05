@@ -42,6 +42,8 @@ Draws avoid current duplicates and prefer topics not recently used in the room. 
 
 ## Settings And Installation
 
+The clickable top-right name/avatar has no underline; it still opens your profile.
+
 Your profile is the top-right header button; tap to edit/remove your name and optionally choose a **koala, baby, cat, robot or fox** avatar, or **No avatar**. Name and avatar save on this browser only after Save; Cancel discards changes. Removing the name keeps the avatar. Names still need to be entered before volunteering as ranker or submitting a guess. The selected avatar accompanies your shared ranker label and submitted guess/results; editing your profile updates those current-room labels without changing any order. Long names truncate on screen without changing the saved name. The ranker label stays visible below the header when selected, and Round options sits beside the stage heading rather than in its own row. **Settings**, **Topics**, **Share / Save** and **Table** have generous gaps in the footer; phones use two columns alongside the QR. The header has no normal connected/saving subtitle or reserved status gap. Reconnecting, offline/error notices and explicit sandbox/local-only labels still appear when applicable.
 
 The upper-right ranker control remains available in every stage. It highlights on the ranker's own browser; clicking it again explains the role rather than changing or hiding their ranking. Another player selecting it mid-round must still confirm takeover. The adjacent info dialog supports Close/X/Escape/backdrop dismissal without changing the game. The handwritten reminder disappears as soon as the shared room has a ranker.
