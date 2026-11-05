@@ -24,30 +24,40 @@
  function toast(message){clearTimeout(noticeTimer);const target=$('#modal').open?$('#modal-error'):$('#toast');if(!target)return;target.textContent=message;target.hidden=false;noticeTimer=setTimeout(()=>{if(target.id==='toast')target.hidden=true;},6500);}
  async function run(fn){if(busy)return false;busy=true;renderStatus();document.querySelectorAll('#game button').forEach(b=>b.disabled=true);try{await fn();return true;}catch(error){toast(error.code==='permission-denied'?'Database access is blocked. Check Firebase rules, then retry.':error.message);return false;}finally{busy=false;signature='';render();}}
  async function command(type,payload={}){return B.command({type,payload:{...payload,expectedRevision:B.room.revision}});}
- function renderStatus(){const state=B.status;$('#connection').className='connection '+state;$('#connection').textContent=busy?'Saving…':state==='live'?'Live with your table':state==='sandbox'?'Sandbox · only on this device':state==='local'?'On this device · sharing is not connected':state==='offline'?'Offline · shared changes need a connection':state==='error'?'Not connected · '+(B.error||'retry in Settings'):'Connecting…';}
+ function renderStatus(){const state=B.status;$('#connection').className='connection '+state;$('#connection').textContent=busy?'Saving…':state==='live'?'Live with your table':state==='sandbox'?'Sandbox · only on this device':state==='local'?'On this device · sharing is not connected':state==='reconnecting'?'Reconnecting with your table…':state==='offline'?'Offline · shared changes need a connection':state==='error'?'Not connected · '+(B.error||'retry in Settings'):'Connecting…';}
+ function renderProgress(){
+  $('.new-round').disabled=busy||!B.room;
+  const phase=B.room?.phase,index=({setup:0,ranking:1,discuss:2,reveal:3,done:3})[phase]??0;
+  const list=$('#progress-steps');list.style.setProperty('--stage',index);
+  list.querySelectorAll('li').forEach((step,i)=>{step.classList.toggle('complete',i<index||phase==='done');step.classList.toggle('current',Boolean(phase)&&i===index);if(phase&&i===index)step.setAttribute('aria-current','step');else step.removeAttribute('aria-current');});
+ }
  function tile(item,index,ranking=false){
   const empty=!item.text;
   return `<li class="topic-tile ${empty?'empty':''}" data-id="${esc(item.id)}" style="--i:${index}"><span class="tile-number">${ranking?index+1:String.fromCharCode(65+index)}</span><span class="tile-text">${empty?'Choose a topic':esc(item.text)}</span>${ranking?`<div class="rank-tools"><button class="icon" data-move="${index}" data-direction="-1" aria-label="Move ${esc(item.text)} up" ${index===0?'disabled':''}>${glyph('chevron-up')}</button><button class="icon" data-move="${index}" data-direction="1" aria-label="Move ${esc(item.text)} down" ${index===3?'disabled':''}>${glyph('chevron-down')}</button><button class="icon drag-handle" aria-label="Drag ${esc(item.text)} to rank" title="Drag to rank">${glyph('grip-horizontal')}</button></div>`:B.room.phase==='setup'?`<div class="tile-tools"><button class="icon" data-edit-item="${index}" aria-label="${empty?'Enter a topic':'Edit '+esc(item.text)}" title="Edit topic">${glyph(empty?'plus':'pencil')}</button><button class="icon" data-shuffle-item="${index}" aria-label="Randomize topic ${index+1}" title="Random topic">${glyph('shuffle')}</button></div>`:''}</li>`;
  }
  function render(){
-  renderStatus();$('#room-label').textContent=roomId==='table'?'Table':roomId.replaceAll('-',' ');
+  renderStatus();renderProgress();$('#room-label').textContent=roomId==='table'?'Table':roomId.replaceAll('-',' ');
   if(!B.room){$('#game').innerHTML=`<div class="loading-bars" aria-label="Loading"><span></span><span></span><span></span><span></span></div>${B.status==='error'?'<button data-retry>Retry connection</button>':''}`;return;}
-  const room=B.room,ranking=mine()&&room.phase==='ranking',sig=JSON.stringify([room,ranking?order():null,busy]);if(sig===signature){if(modalKind==='topics')renderTopics();return;}signature=sig;
+  const room=B.room,ranking=mine()&&room.phase==='ranking';
+  // Firestore map key order can change on reconnect without any actual game change.
+  const sig=JSON.stringify([room.id,room.roundId,room.revision,room.phase,room.picker,room.owner,room.items.map(i=>[i.id,i.text,i.topicId]),room.revealed,ranking?order():null,busy]);if(sig===signature){if(modalKind==='topics')renderTopics();return;}signature=sig;
   sorter?.destroy();sorter=null;
-  const named=room.picker?esc(room.picker):'The picker';
+  const named=room.picker?esc(room.picker):'The Star';
   let heading,sub,actions='';
   if(room.phase==='setup'){
-   heading='Pick four.';sub='';actions=`<button class="secondary" data-draw>${glyph('shuffle')} Four random topics</button><button class="primary" data-claim ${room.items.some(i=>!i.text)?'disabled':''}>${glyph('hand')} I’m ranking</button>`;
+   heading='Pick four.';sub='';actions=`<button class="secondary" data-draw>${glyph('shuffle')} Four random topics</button><button class="primary" data-claim ${room.items.some(i=>!i.text)?'disabled':''}>${glyph('sparkles')} I’m the Star</button>`;
   }else if(ranking){heading='Your favorites, in order.';sub='Only on your phone';actions=`<button class="primary" data-ready>${glyph('eye-off')} Ready · hide my ranking</button>`;}
-  else if(room.phase==='ranking'){heading=room.picker?`${named} is ranking.`:'Someone’s ranking.';sub='Talk amongst yourselves.';}
+  else if(room.phase==='ranking'){heading=`${named} is ranking.`;sub='Talk amongst yourselves.';}
   else if(room.phase==='discuss'){heading='What’s the order?';sub=mine()?'Your ranking is hidden.':'Make your case.';if(mine())actions=`<button class="primary" data-reveal>${glyph('sparkles')} Reveal least favorite</button><button class="text-link" data-rerank>Adjust my ranking</button>`;}
   else{heading=room.phase==='done'?'Well, there it is.':'The plot thickens.';sub=room.picker?`${named}’s preferences`:'';if(mine()&&room.phase!=='done')actions=`<button class="primary" data-reveal>${glyph('sparkles')} ${room.revealed.length===3?'Reveal the favorite':'Reveal next'}</button><button class="text-link" data-reveal-all>Reveal all</button>`;if(room.phase==='done')actions=`<button class="primary" data-next>${glyph('rotate-cw')} Next round</button>`;}
   let body;
   if(['reveal','done'].includes(room.phase))body=`<ol class="topic-list revealed-list">${[0,1,2,3].map(i=>{const id=room.revealed[3-i],item=room.items.find(t=>t.id===id);return `<li class="topic-tile reveal-tile ${item?'revealed':'unrevealed'}" style="--i:${i}" data-rank="${i+1}"><span class="tile-number">${i+1}</span><span class="tile-text">${item?esc(item.text):'…'}</span>${i===0?`<span class="favorite-icon">${glyph('heart')}</span>`:''}</li>`;}).join('')}</ol>`;
   else body=`${ranking?'<div class="rank-label"><span>Most favorite</span><span>↓</span></div>':''}<ol id="topic-list" class="topic-list ${ranking?'ranking-list':''}">${(ranking?order().map(id=>room.items.find(i=>i.id===id)):room.items).map((item,i)=>tile(item,i,ranking)).join('')}</ol>${ranking?'<div class="rank-label rank-bottom">Least favorite</div>':''}`;
-  $('#game').innerHTML=`<div class="round-heading"><div><h2>${heading}</h2>${sub?`<p>${sub}</p>`:''}</div>${room.phase!=='setup'&&room.phase!=='done'?`<button class="icon quiet" data-reset aria-label="Start a new round" title="New round">${glyph('rotate-ccw')}</button>`:''}</div>${room.phase==='setup'?`<button class="picker-name text-link" data-picker>${room.picker?named+'’s turn':'Whose turn? (optional)'} ${glyph('pencil')}</button>`:''}${body}<div class="round-actions">${actions}</div>`;
+  $('#game').innerHTML=`<div class="round-heading"><div><h2>${heading}</h2>${sub?`<p>${sub}</p>`:''}</div></div>${room.phase==='setup'?`<button class="picker-name text-link" data-picker>${room.picker?named+'’s turn':'Who’s the Star? (optional)'} ${glyph('pencil')}</button>`:''}${body}<div class="round-actions">${actions}</div>`;
   if(ranking)sorter=new Sortable($('#topic-list'),{animation:220,handle:'.drag-handle',ghostClass:'drag-ghost',chosenClass:'drag-chosen',dragClass:'dragging',forceFallback:true,fallbackOnBody:true,onEnd(){const ids=[...$('#topic-list').children].map(el=>el.dataset.id);saveOrder(ids);refreshRankLabels();signature='';}});
   if(lastPhase!==room.phase){document.body.dataset.phase=room.phase;if(room.phase==='done'&&lastPhase)celebrate();lastPhase=room.phase;}
+  if(busy)$('#game').querySelectorAll('button').forEach(button=>button.disabled=true);
+  $('.new-round').disabled=busy;
   icons();if(modalKind==='topics')renderTopics();
  }
  function celebrate(){if(prefs.motion==='off'||matchMedia('(prefers-reduced-motion: reduce)').matches)return;$('#confetti').innerHTML=Array.from({length:prefs.motion==='ridiculous'?70:24},(_,i)=>`<span style="--x:${Math.random()*100}%;--delay:${Math.random()*.4}s;--color:${['#ee6c65','#e3b93c','#3a9f91','#5882cc'][i%4]};--spin:${Math.random()*720}deg"></span>`).join('');setTimeout(()=>$('#confetti').replaceChildren(),2400);}

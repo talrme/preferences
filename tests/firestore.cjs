@@ -2,9 +2,27 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'}),environment='test-'+Date.now(),contexts=[],errors=[];
  try{
-  async function device(){const c=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});contexts.push(c);await c.route('**/config.js',r=>r.fulfill({contentType:'application/javascript',body:fs.readFileSync(path.join(__dirname,'../config.js'),'utf8')+`\nPREFERENCES_CONFIG.environment=${JSON.stringify(environment)};`}));const p=await c.newPage();p.on('pageerror',e=>errors.push(e.message));await p.goto(`http://127.0.0.1:5196/?room=integration`);await p.waitForFunction(()=>PreferencesBackend.status==='live',null,{timeout:45000});return {p,c};}
+  async function device(){const c=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});contexts.push(c);await c.route('**/config.js',r=>r.fulfill({contentType:'application/javascript',body:fs.readFileSync(path.join(__dirname,'../config.js'),'utf8')+`\nPREFERENCES_CONFIG.environment=${JSON.stringify(environment)};`}));const p=await c.newPage(),requests={seed:0,transactions:0};p.on('request',r=>{if(r.url().includes('/shared/topics.json'))requests.seed++;if(/:batchGet|:commit/.test(r.url()))requests.transactions++;});p.on('pageerror',e=>errors.push(e.message));await p.goto(`http://127.0.0.1:5196/?room=integration`);await p.waitForFunction(()=>PreferencesBackend.status==='live',null,{timeout:45000});return {p,c,requests};}
   const a=await device(),b=await device();assert.equal(await a.p.evaluate(()=>PreferencesTest.getTopics().length),200);
   await a.p.locator('[data-draw]').click();await b.p.waitForFunction(()=>PreferencesTest.getPublic().items.every(i=>i.text));
+  await a.p.waitForFunction(()=>document.querySelector('#connection').textContent==='Live with your table');
+  // Returning to a tab must not clear the game, rerun seed checks or erase a draft.
+  await a.p.locator('[data-edit-item="0"]').click();await a.p.locator('#item-text').fill('Unsaved draft survives a tab switch');
+  const before={...a.requests};
+  await a.p.evaluate(()=>{
+   window.retainedList=document.querySelector('#topic-list');window.sawLoader=false;
+   window.resumeObserver=new MutationObserver(()=>{if(document.querySelector('.loading-bars'))window.sawLoader=true;});resumeObserver.observe(document.querySelector('#game'),{childList:true,subtree:true});
+   Object.defineProperty(document,'hidden',{configurable:true,get:()=>Boolean(window.testHidden)});
+   for(let i=0;i<3;i++){window.testHidden=true;document.dispatchEvent(new Event('visibilitychange'));window.testHidden=false;document.dispatchEvent(new Event('visibilitychange'));}
+  });
+  await a.p.waitForFunction(()=>PreferencesBackend.status==='live');
+  assert.equal(await a.p.locator('#item-text').inputValue(),'Unsaved draft survives a tab switch');
+  const retained=await a.p.evaluate(()=>({sameList:window.retainedList===document.querySelector('#topic-list'),sawLoader:window.sawLoader}));assert(retained.sameList&&!retained.sawLoader,JSON.stringify(retained));
+  assert.equal(a.requests.seed,before.seed);assert.equal(a.requests.transactions,before.transactions,'Resume should only reconnect listeners, not rerun initialization transactions');
+  await a.p.evaluate(()=>{delete document.hidden;resumeObserver.disconnect();});await a.p.locator('.close').click();
+  await a.c.setOffline(true);await a.p.waitForFunction(()=>PreferencesBackend.status==='offline');
+  await a.p.evaluate(()=>{PreferencesBackend.pause();return PreferencesBackend.open('integration');});assert.equal(await a.p.locator('.loading-bars').count(),0);
+  await a.c.setOffline(false);await a.p.waitForFunction(()=>PreferencesBackend.status==='live',null,{timeout:45000});
   await a.p.locator('[data-claim]').click();await b.p.waitForFunction(()=>PreferencesTest.getPublic().phase==='ranking');assert.equal(await b.p.locator('.ranking-list').count(),0);
   const revision=await b.p.evaluate(()=>PreferencesTest.getPublic().revision);await a.p.locator('[data-move="0"][data-direction="1"]').click();assert.equal(await b.p.evaluate(()=>PreferencesTest.getPublic().revision),revision,'Private ranking cannot write to Firestore');
   await a.p.locator('[data-ready]').click();await b.p.waitForFunction(()=>PreferencesTest.getPublic().phase==='discuss');assert.deepEqual(await b.p.evaluate(()=>PreferencesTest.getPublic().revealed),[]);
@@ -17,7 +35,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
   for(const p of [a.p,b.p])await p.locator('.close').click();await a.p.locator('[data-draw]').click();await b.p.waitForFunction(()=>PreferencesTest.getPublic().items.every(i=>i.text));
   await Promise.all([a.p.locator('[data-claim]').click(),b.p.locator('[data-claim]').click()]);await a.p.waitForFunction(()=>PreferencesTest.getPublic().phase==='ranking');await b.p.waitForFunction(()=>PreferencesTest.getPublic().phase==='ranking');assert.equal(await a.p.evaluate(()=>PreferencesTest.getPublic().owner),await b.p.evaluate(()=>PreferencesTest.getPublic().owner));
   assert.equal((await a.p.locator('.ranking-list').count())+(await b.p.locator('.ranking-list').count()),1);assert.deepEqual(errors,[]);
-  console.log('PASS live Firestore: isolated test environment, 200-topic seed, two-browser room sync, one picker, secret ordering makes no shared writes, refresh preservation, strictly incremental reveal, permanent topic add/edit/remove/restore, concurrent claim protection.');
+  console.log('PASS live Firestore: isolated test environment, 200-topic seed, two-browser room sync, rapid hide/show without loader/reinitialization/draft loss, offline return/reconnect without refresh, one Star, private ordering without writes, incremental reveal, permanent topic CRUD/restore, concurrent claim protection.');
  }finally{
   const p=contexts[0]?.pages()[0];if(p)await p.evaluate(async environment=>{if(!environment.startsWith('test-'))throw Error('Unsafe cleanup');const sdk=await import('https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js'),app=await import('https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js'),db=sdk.getFirestore(app.getApps()[0]);for(const name of ['topics','rooms']){const docs=await sdk.getDocsFromServer(sdk.collection(db,'preferences',environment,name));if(!docs.empty){const batch=sdk.writeBatch(db);docs.docs.forEach(d=>batch.delete(d.ref));await batch.commit();}}await sdk.deleteDoc(sdk.doc(db,'preferences',environment));},environment).catch(e=>console.error('Test cleanup failed:',e.message));await browser.close();
  }

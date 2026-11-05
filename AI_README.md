@@ -1,5 +1,13 @@
 # Preferences: AI Handoff
 
+## November 5: Progress And Resume Fix
+
+The ranking person is now called **the Star** in visible UI (I'm the Star / Who's the Star?); keep internal picker/owner fields unchanged for existing room compatibility. Four non-interactive circle steps above the game: Choose (setup), Rank (ranking), Discuss (discuss), Reveal (reveal/done). aria-current=step tracks exactly one active step; done fills all circles. Always-visible New round above game requires existing reset confirmation, not a backend/library reset. No click-to-skip stages.
+
+Tab-return bug was B.open clearing B.room and repeating topic fetch + marker transaction + room transaction on every visibility return; overlapping opens also installed stale listeners. Now keep B.room for same-room reconnects, show only reconnecting status, cache SDK/seed initialization and per-room existence checks for page lifetime, and attach only listeners on resume. SDK initialization and open calls coalesce; generation tokens invalidate obsolete async work/callbacks on pause/new open. Cached snapshots never claim fresh status. Offline/online, visibility return, missing-listener focus and BFCache pageshow reconnect without reloading. Stop both listeners on permanent listener errors. No interval polling was introduced.
+
+app render signatures use an explicit ordered tuple of displayed room fields and slot fields rather than JSON.stringify(room), since Firestore map key order can change across listeners. Unchanged reconnects leave the actual topic-list DOM, drag state and modal drafts alone. Public room/private-order revisions remain protected. The real Firestore test now simulates repeated visibility events, verifies identical DOM/no loader/draft preservation/no repeated topic fetch or initialization transactions, tests offline-return recovery without refresh, and continues the complete two-device privacy/library/concurrency suite. These are browser-driven simulated lifecycle events, not automated physical-phone testing.
+
 ## Product Intent
 
 Phone-first, low-friction dinner-table game for friends. The fun is the **shared spoken discussion**, not privately submitting guesses or scoring. Four topics that people might love/hate; one picker privately orders them; everyone discusses; reveal least favorite→favorite. No score, countdown, player roster, vote collection, or game-show feature creep.

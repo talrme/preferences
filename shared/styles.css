@@ -4,5 +4,18 @@
 @media(max-width:359px){.app{padding:16px 12px 24px}h1{font-size:23px}.identity{gap:7px}.identity img{width:29px;height:29px}.room-link{max-width:95px}.tile-text{font-size:16px}.topic-tile{padding:12px 9px;gap:6px}.rank-tools .icon{width:26px;min-width:26px;padding:3px}.tile-number{width:17px;flex-basis:17px}.footer-tools{gap:3px 10px}.footer-tools button{font-size:10px}.palettes{gap:11px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 .ranking-list .topic-tile{animation:none!important}
+.round-progress{margin:0 0 2px}
+.round-progress ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));position:relative;isolation:isolate}
+.round-progress ol:before,.round-progress ol:after{content:'';position:absolute;top:12px;left:12.5%;height:2px;z-index:-1}
+.round-progress ol:before{width:75%;background:var(--line)}
+.round-progress ol:after{width:calc(25% * var(--stage));background:var(--accent);transition:width .35s ease}
+.round-progress li{display:grid;justify-items:center;gap:6px;font-size:10px;color:var(--muted);font-weight:550;min-width:0}
+.step-circle{width:26px;height:26px;display:grid;place-items:center;border:1px solid var(--line);background:var(--bg);border-radius:50%;font-size:10px;transition:background .25s,box-shadow .25s,color .25s}
+.round-progress .current{color:var(--ink);font-weight:750}
+.round-progress .current .step-circle{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);box-shadow:0 0 0 4px var(--soft)}
+.round-progress .complete .step-circle{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.round-utility{display:flex;justify-content:flex-end;margin:8px 0 15px}
+.new-round{font-size:11px;color:var(--muted);gap:5px;text-decoration:none;min-height:32px}
+.new-round svg{width:13px;height:13px}
 body[data-palette]:not([data-palette="design"]):not([data-palette="night"]){color-scheme:light}
 body[data-palette]:not([data-palette="design"]):not([data-palette="night"]) .danger,body[data-palette]:not([data-palette="design"]):not([data-palette="night"]) #modal-error{color:#b43c48}

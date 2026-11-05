@@ -7,15 +7,15 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
    p.on('pageerror',e=>errors.push(e.message));await c.route('**/firestore.googleapis.com/**',r=>{errors.push('Sandbox contacted Firebase');return r.abort();});
    await p.goto(`http://127.0.0.1:5196/?demo=1&room=test-${i}`);
    await p.waitForFunction(()=>document.querySelector('#connection').textContent.startsWith('Sandbox'));
-   assert.equal(await p.locator('.topic-tile').count(),4);await p.locator('[data-draw]').click();
+   assert.equal(await p.locator('.topic-tile').count(),4);assert.equal(await p.locator('#progress-steps [aria-current=step]').innerText(),'1\nChoose');assert(await p.locator('.new-round').isVisible());await p.locator('[data-draw]').click();
    await p.waitForFunction(()=>PreferencesTest.getPublic().items.every(i=>i.text));
    await p.locator('[data-edit-item="0"]').click();await p.locator('#item-text').fill('Sleeping with socks on while listening to an extremely detailed documentary');await p.locator('[data-save-item]').click();
-   await p.locator('#modal').waitFor({state:'hidden'});await p.locator('[data-claim]').click();await p.locator('.ranking-list').waitFor();
+   await p.locator('#modal').waitFor({state:'hidden'});assert.equal(await p.locator('[data-claim]').innerText(),'I’m the Star');await p.locator('[data-claim]').click();await p.locator('.ranking-list').waitFor();assert.equal(await p.locator('#progress-steps [aria-current=step]').innerText(),'2\nRank');
    const original=await p.evaluate(()=>PreferencesTest.getPrivate());await p.locator('[data-move="0"][data-direction="1"]').click();assert.notDeepEqual(await p.evaluate(()=>PreferencesTest.getPrivate()),original);
    await p.reload();await p.locator('.ranking-list').waitFor();assert.equal(await p.evaluate(()=>PreferencesTest.getPrivate()[1]),original[0]);
-   await p.locator('[data-ready]').click();await p.locator('[data-reveal]').waitFor();assert(!(await p.locator('.ranking-list').isVisible()));
+   await p.locator('[data-ready]').click();await p.locator('[data-reveal]').waitFor();assert(!(await p.locator('.ranking-list').isVisible()));assert.equal(await p.locator('#progress-steps [aria-current=step]').innerText(),'3\nDiscuss');
    const publicRoom=await p.evaluate(()=>PreferencesTest.getPublic());assert.equal(publicRoom.phase,'discuss');assert.deepEqual(publicRoom.revealed,[]);assert(!('order' in publicRoom));
-   for(let j=1;j<=4;j++){await p.locator('[data-reveal]').click();await p.waitForFunction(n=>PreferencesTest.getPublic().revealed.length===n,j);assert.equal(await p.locator('.revealed').count(),j);}
+   for(let j=1;j<=4;j++){await p.locator('[data-reveal]').click();await p.waitForFunction(n=>PreferencesTest.getPublic().revealed.length===n,j);assert.equal(await p.locator('.revealed').count(),j);assert.equal(await p.locator('#progress-steps [aria-current=step]').innerText(),'4\nReveal');assert(await p.locator('.new-round').isVisible());}
    await p.locator('[data-next]').click();await p.locator('[data-draw]').waitFor();
    await p.locator('[data-topics]').click();await p.locator('[data-new-topic]').click();await p.locator('#topic-text').fill('Test topic '+i);await p.locator('[data-save-topic]').click();await p.locator('#topic-search').fill('Test topic '+i);
    await p.locator('[data-edit-topic]').click();await p.locator('#topic-text').fill('Updated test topic '+i);await p.locator('[data-save-topic]').click();await p.locator('#topic-search').fill('Updated test topic '+i);

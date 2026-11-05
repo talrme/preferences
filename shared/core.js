@@ -24,7 +24,7 @@
    if(!p.device)throw Error('This device could not be identified.');state.owner=p.device;state.phase='ranking';
    state.seen=[...new Set([...state.seen,...state.items.map(i=>i.topicId).filter(Boolean)])].slice(-500);
   }else{
-   if(state.owner!==p.device)throw Error('Only the picker can do that.');
+   if(state.owner!==p.device)throw Error('Only the Star can do that.');
    if(cmd.type==='ready'){
     if(state.phase!=='ranking')throw Error('This round is not ready for that.');state.phase='discuss';
    }else if(cmd.type==='rerank'){

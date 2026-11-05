@@ -12,8 +12,10 @@ A phone-first dinner-table game: four topics, one person's private ranking, and 
 
 ## Playing
 
-1. Tap **Four random topics**, draw individual topics with each shuffle icon, or enter your own using its pencil/plus. An optional name labels whose turn it is.
-2. The picker taps **I'm ranking**. That locks the four topics for everyone. Rank from most favorite to least favorite by dragging the handles, or with the arrow buttons.
+The person whose preferences everyone is guessing is **the Star**. A compact circle-and-line progress indicator follows **Choose → Rank → Discuss → Reveal**. It shows the shared round stage on every phone, not a clickable way to skip private steps. **New round** stays available above the game in every stage, with confirmation before clearing the current round; the library remains intact.
+
+1. Tap **Four random topics**, draw individual topics with each shuffle icon, or enter your own using its pencil/plus. The optional Who's the Star? name labels whose turn it is.
+2. The Star taps **I'm the Star**. That locks the four topics for everyone. Rank from most favorite to least favorite by dragging the handles, or with the arrow buttons.
 3. Tap **Ready · hide my ranking**. All phones now show the original unranked topics for group discussion. Your secret ranking is saved only on your device.
 4. Reveal from least favorite up to favorite, one at a time. After the first answer, Reveal all is available too. Each step syncs to everyone; unrevealed answers are not sent to the database.
 5. Tap **Next round**. The room link stays the same. A circular-arrow control can reset a stuck/abandoned round after confirmation, without deleting topics.
@@ -50,7 +52,9 @@ preferences/main/rooms/ROOM_ID        # four topics, round ID, phase, picker dev
 
 The room document never contains the private ranking. During reveal it contains only the IDs revealed so far, in least-favorite-first order. All normal browser writes are transactions. Shared edits are not shown as successfully saved until acknowledged; stale room/topic edits show an error instead of silently overwriting a newer action. Private ranking movements save locally without network writes.
 
-Live listeners deliver changes without interval polling. Hidden tabs unsubscribe and reconnect when brought back. Offline status is explicit. Shared actions need connectivity and are **not** a durable offline outbox: if saving fails, retry the action when connected. No silent local fallback is used when Firebase is configured but unavailable. This avoids showing a separate fake shared game. The local sandbox below is separate and clearly labeled.
+Live listeners deliver changes without interval polling. Hidden tabs unsubscribe and reconnect when brought back, keeping the current game and open drafts visible instead of replacing them with the startup loader. Returning only reconnects listeners: seed/library initialization and room-creation checks are cached for the page lifetime, not rerun on every tab switch. Rapid returns/online events are coalesced, and obsolete callbacks are ignored. A small Reconnecting status remains until server snapshots confirm freshness. Same-content snapshots do not remount the list just because Firestore map key order differs. A first full page load still needs initial setup checks; none of this labels cached data as freshly synced.
+
+Offline status is explicit, and coming back online reconnects without a manual refresh. Shared actions need connectivity and are **not** a durable offline outbox: if saving fails, retry the action when connected. No silent local fallback is used when Firebase is configured but unavailable. This avoids showing a separate fake shared game. The local sandbox below is separate and clearly labeled.
 
 The owner explicitly requested unauthenticated public read/write access. Anyone can read/change/delete topics or rounds, bypass validation, or consume quota. Do not store sensitive information. Passwords, admin roles, trusted validation, App Check and automatic backups are not implemented. All topics are loaded when opening; pagination is future work if the library grows dramatically.
 
