@@ -6,6 +6,10 @@ Latest design request: brighter unobtrusive background and no decorative feature
 
 Top-right profile name/avatar must not be underlined. .topbar .header-name overrides the shared .text-link decoration; preserve click/focus behavior and do not remove underlines globally. Header/footer tests assert normal and hovered decoration is none.
 
+## Footer Tools And Room Naming
+
+Current footer layout supersedes older two-column/QR-side-by-side descriptions: .footer is column flex; .footer-tools is4 equal grid columns,16px gap,max420px, with matching42px icon surfaces and labels below inside76px-tall native buttons. All4 remain in one row at320px+, each target wider than44px. Icons use control tokens for contrast; labels use ink. .room-invite below combines the handwritten .qr-reminder on the left and stationary QR on right. No extra card or outlines except keyboard focus. Footer label Table is now Room; info title Your room and settings summary Rooms; create/join dialog uses room wording. Keep internal tableInfo/settings-tables/data-table-settings/section=tables and default roomId=table for compatibility; do not migrate URLs or Firestore. footer-tools.cjs tests all dialogs, room settings focus, targets/alignment,5 palettes at320/390/1280 with screenshots. header-footer/contrast tests still apply.
+
 ## New Round Confirmation Copy
 
 Reset confirmation says Start a new round? followed by The topics, rankings, and guesses from this round will be cleared for everyone. Confirm label is Yes, Clear and Start New Round; keep normal palette primary styling, no library explanation. Existing reset behavior is unchanged. round-controls.cjs checks wording, cancel/reset and long-button fit at320/390/1280.

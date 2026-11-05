@@ -198,3 +198,16 @@ body[data-palette=night] .step-error{color:#ffb1bf}
  .step-direction{margin-top:8px;min-height:0;line-height:1.4}
  .guess-count{margin-top:6px}
 }
+
+/* A single row of matching tools, separate from the invitation. */
+.footer{flex-direction:column;gap:22px;margin-top:24px;padding-top:12px}
+.footer-tools{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;width:100%;max-width:420px;flex:none}
+.footer-tools button{flex-direction:column;justify-content:flex-start;gap:8px;padding:4px 0;min-height:76px;min-width:0;color:var(--ink);font-size:11px;font-weight:550;background:transparent}
+.footer-tools button span{white-space:nowrap}
+.footer-tools button svg{box-sizing:content-box;width:20px;height:20px;padding:11px;border-radius:8px;background:var(--control);color:var(--control-ink);flex-shrink:0}
+.footer-tools button:hover{background:transparent}
+.footer-tools button:hover svg{background:var(--control-hover)}
+.room-invite{display:flex;justify-content:center;align-items:center;gap:14px;width:100%}
+.room-invite .qr-reminder{margin:0;max-width:220px;text-align:right;flex-shrink:1;min-width:0}
+.room-invite .qr-small{flex-shrink:0}
+@media(max-width:359px){.footer-tools button{font-size:10px}.room-invite{gap:8px}.room-invite .qr-reminder{font-size:16px}}

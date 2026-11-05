@@ -66,6 +66,8 @@ Tapping an unavailable step action shows a short red explanation directly undern
 
 Below progress/results, **Start a New Round** is a centered button with the existing confirmation. A labeled **Round options** control sits directly underneath, replacing the heading's ellipsis menu. Random-topic controls are unchanged.
 
+The footer uses four matching icon buttons with labels underneath: **Settings**, **Topics**, **Share / Save**, and **Room** (formerly Table). They stay in one row on phones and desktop, with generous tap targets. The QR and handwritten invitation have their own row below. The Room dialog opens the **Rooms** section in Settings; existing room links and data are unchanged.
+
 Modals are centered except topic/profile editors on phones, which open near the top and resize to the visible viewport so their Save footer stays above the keyboard. X, Escape and clicking outside close them. Draft text is saved only by its explicit Save button. Topic fields have no example placeholder; the optional switch says **Add this to the list of topics**.
 
 The four-color **horizontal-bar PNG**, like four ranked preferences, is the favicon, home-screen icon and header icon. Icon URLs are versioned to refresh caches; an already-installed phone shortcut might need removing and re-adding to replace its old artwork. Share / Save has room link copying, a locally generated QR and iPhone/Android installation instructions. The game dynamically creates a room-specific install manifest. Installed shortcuts are still websites, not separate data stores. Check your phone's installed shortcut opens the intended room; OS installation behavior can vary.
