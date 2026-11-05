@@ -1,5 +1,9 @@
 # Preferences: AI Handoff
 
+## Bright Flat Styling
+
+Latest design request: brighter unobtrusive background and no decorative feature outlines. Default Paper Bowl layout now uses sky-blue -> mint/lime gradient (--bg-start/end in designs.css). Explicit Citrus/Ocean/Rose palettes override both gradient endpoints; Night keeps dark charcoal/green. Body gradient spans the whole document (not fixed to viewport), not an illustration/hero. Keep current typography, paper tilt, reminder and layout. Topic tiles are white fills without shadows/borders; remove the decorative bowl arc. Flat-color secondary/ranker buttons; selected ranker and avatar use accent fill. No component borders, stage stripe, section/modal dividers, selected swatch outline or progress glow. Palette selection uses slight scale; arrow/key focus still gets :focus-visible outlines for accessibility. Active drag retains lift shadow/opacity but no border. CSS flat overrides live at end of styles.css; designs.css removes its higher-specificity tile shadow/bowl border. Do not inadvertently restore default .text-link underline on profile. tests/bright-design.cjs checks borderless controls, distinct palettes, >=4.5 primary contrast, retained focus, phone/desktop screenshots. No JS/backend/data changes.
+
 Top-right profile name/avatar must not be underlined. .topbar .header-name overrides the shared .text-link decoration; preserve click/focus behavior and do not remove underlines globally. Header/footer tests assert normal and hovered decoration is none.
 
 ## Visible Ranker Control And Handwritten Reminder

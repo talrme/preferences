@@ -1,10 +1,10 @@
 /* Paper Bowl, promoted from option one. */
-body[data-design="1"]{--bg:#f5f6f2;--ink:#263b35;--accent:#377765;--soft:#e4eee7;--line:#d4dfd6}
+body[data-design="1"]{--bg:#daf4ed;--bg-start:#bce5ff;--bg-end:#dff3b7;--ink:#173c48;--muted:#46646b;--accent:#176b87;--soft:#dbf1f4;--line:#b9dce2}
 body[data-design="1"] h1,body[data-design="1"] h2{font-family:Georgia,serif;font-weight:500}
 body[data-design="1"] h2{font-size:30px}
-body[data-design="1"] .topic-list:not(.ranking-list){padding:10px 8px 24px;border-bottom:5px solid var(--accent);border-radius:0 0 45% 45%;gap:16px}
+body[data-design="1"] .topic-list:not(.ranking-list){padding:10px 8px 24px;border:0;gap:16px}
 body[data-design="1"] .topic-list:not(.ranking-list) .topic-tile:nth-child(odd){rotate:-1.5deg}
 body[data-design="1"] .topic-list:not(.ranking-list) .topic-tile:nth-child(even){rotate:1deg}
-body[data-design="1"] .topic-tile{box-shadow:2px 5px 0 #263b350a;border-radius:3px;animation-name:paper-tumble;animation-duration:.55s}
+body[data-design="1"] .topic-tile{box-shadow:none;border-radius:6px;animation-name:paper-tumble;animation-duration:.55s}
 body[data-design="1"] .tile-text{font-family:Georgia,serif;font-weight:500}
 @keyframes paper-tumble{from{opacity:0;transform:translateY(-25px) rotate(-6deg)}to{opacity:1;transform:none}}

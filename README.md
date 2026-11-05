@@ -8,6 +8,8 @@ A phone-first dinner-table game: four topics, one person's private ranking, and 
 
 ## Current Design
 
+The default design uses a soft sky-blue-to-mint/lime gradient with solid-color, borderless controls and white topic tiles. The decorative bowl outline, panel dividers and selection rings are removed; selected controls use color fills instead. Keyboard focus indicators remain visible. Other palettes have their own colorful gradients, while Night stays dark. This is an appearance-only change; game flow and saved data are unchanged.
+
 **Paper Bowl (option one)** is now the main website. The chooser, other nine designs and their staging assets have been removed. The old option-one URL is a small redirect to the main game that preserves the room/query; it is not a second app. Existing rooms, the permanent topic library and device-local private rankings use the same keys/backend as before, with no data migration or reset.
 
 ## Playing
