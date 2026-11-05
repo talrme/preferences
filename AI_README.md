@@ -1,5 +1,9 @@
 # Preferences: AI Handoff
 
+## Tappable Setup Topics
+
+In setup, the existing accessible plus/pencil button has a full-tile ::after hit target; the shuffle button is above it in stacking order and keeps its separate action. Do not add nested buttons or make ranking/discussion tiles editable. Disable/button semantics and keyboard Enter remain native; editItem also guards busy/non-setup. Empty topic -> Add a Topic; filled -> Edit Topic, with the identical editor/body/options. editor.cjs tests tapping tile padding, dynamic titles, existing values, independent shuffle and keyboard activation. Keep edit button transform:none so its stretched pseudo-element stays relative to the tile during active/hover states.
+
 ## Header Name And Footer Tables
 
 Current layout supersedes the separate name/role/menu row: a static data-player-name button in topbar owns #player-name-label and displays locally saved name on the right (ellipsis/title for long names). Update text even on stable game signatures. Disable during writes/loading; clearName tolerates missing B.room. #player-controls is only the compact ranker label and is hidden with no owner. Round options moved into .round-heading-tools beside any shuffle icon; keep sorting/private-state behavior unchanged. No table/room button in header.
