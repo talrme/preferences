@@ -10,19 +10,22 @@
  if(!['design','citrus','ocean','rose','night'].includes(prefs.palette))prefs.palette='design';
  if(!['off','gentle','playful','ridiculous'].includes(prefs.motion))prefs.motion='playful';
  let device=localStorage.getItem(deviceKey);if(!device){device=crypto.randomUUID();localStorage.setItem(deviceKey,device);}
- let busy=false,sorter=null,signature='',lastPhase='',topicSearch='',topicFilter='active',modalKind='',modalData=null,noticeTimer;
+ let busy=false,sorter=null,signature='',lastPhase='',topicSearch='',topicFilter='active',modalKind='',modalData=null,noticeTimer,pickerVisible=true,guessEditing=false,dragging=false;
  const icons=()=>lucide.createIcons(),glyph=(name,label)=>`<i data-lucide="${name}"${label?` aria-label="${label}"`:''}></i>`;
  const savePrefs=()=>{localStorage.setItem(prefKey,JSON.stringify(prefs));document.body.dataset.palette=prefs.palette;document.body.dataset.motion=prefs.motion;};savePrefs();
  const key=()=>`preferences-private-${isSandbox?'sandbox':PREFERENCES_CONFIG.environment}-${roomId}-${B.room.roundId}`;
  function order(){try{return C.privateOrder(B.room,JSON.parse(localStorage.getItem(key())||'null'));}catch{return B.room.items.map(i=>i.id);}}
  function saveOrder(ids){localStorage.setItem(key(),JSON.stringify(ids));}
+ function guessOrder(){try{return C.privateOrder(B.room,JSON.parse(localStorage.getItem(key()+'-guess')||'null')||B.room.guesses?.[device]?.order);}catch{return C.privateOrder(B.room);}}
+ const activeOrder=()=>guessEditing?guessOrder():order();
+ const saveActiveOrder=ids=>localStorage.setItem(key()+(guessEditing?'-guess':''),JSON.stringify(ids));
  function refreshRankLabels(){[...$('#topic-list').children].forEach((el,i)=>{el.querySelector('.tile-number').textContent=i+1;el.querySelectorAll('[data-move]').forEach(button=>{button.dataset.move=i;button.disabled=Number(button.dataset.direction)<0?i===0:i===3;});});}
  const mine=()=>B.room?.owner===device;
  const shareUrl=()=>{const url=new URL(location.href);url.search='';url.hash='';url.searchParams.set('room',roomId);return url.href;};
  const liveShareUrl=()=>{const url=new URL(PREFERENCES_CONFIG.liveUrl);url.searchParams.set('room',roomId);return url.href;};
  function qr(node,size){node.replaceChildren();new QRCode(node,{text:location.hostname==='127.0.0.1'||location.hostname==='localhost'?liveShareUrl():shareUrl(),width:size,height:size,colorDark:'#15262c',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});}
  function toast(message){clearTimeout(noticeTimer);const target=$('#modal').open?$('#modal-error'):$('#toast');if(!target)return;target.textContent=message;target.hidden=false;noticeTimer=setTimeout(()=>{if(target.id==='toast')target.hidden=true;},6500);}
- async function run(fn){if(busy)return false;busy=true;renderStatus();document.querySelectorAll('#game button').forEach(b=>b.disabled=true);try{await fn();return true;}catch(error){toast(error.code==='permission-denied'?'Database access is blocked. Check Firebase rules, then retry.':error.message);return false;}finally{busy=false;signature='';render();}}
+ async function run(fn){if(busy)return false;busy=true;renderStatus();document.querySelectorAll('#game button,#player-controls button,#player-controls input').forEach(b=>b.disabled=true);try{await fn();return true;}catch(error){toast(error.code==='permission-denied'?'Database access is blocked. Check Firebase rules, then retry.':error.message);return false;}finally{busy=false;signature='';render();}}
  async function command(type,payload={}){return B.command({type,payload:{...payload,expectedRevision:B.room.revision}});}
  function renderStatus(){const state=B.status;$('#connection').className='connection '+state;$('#connection').textContent=busy?'Saving…':state==='live'?'Live with your table':state==='sandbox'?'Sandbox · only on this device':state==='local'?'On this device · sharing is not connected':state==='reconnecting'?'Reconnecting with your table…':state==='offline'?'Offline · shared changes need a connection':state==='error'?'Not connected · '+(B.error||'retry in Settings'):'Connecting…';}
  function renderProgress(){
@@ -33,37 +36,53 @@
  }
  function tile(item,index,ranking=false){
   const empty=!item.text;
-  return `<li class="topic-tile ${empty?'empty':''}" data-id="${esc(item.id)}" style="--i:${index}"><span class="tile-number">${ranking?index+1:String.fromCharCode(65+index)}</span><span class="tile-text">${empty?'Choose a topic':esc(item.text)}</span>${ranking?`<div class="rank-tools"><button class="icon" data-move="${index}" data-direction="-1" aria-label="Move ${esc(item.text)} up" ${index===0?'disabled':''}>${glyph('chevron-up')}</button><button class="icon" data-move="${index}" data-direction="1" aria-label="Move ${esc(item.text)} down" ${index===3?'disabled':''}>${glyph('chevron-down')}</button><button class="icon drag-handle" aria-label="Drag ${esc(item.text)} to rank" title="Drag to rank">${glyph('grip-horizontal')}</button></div>`:B.room.phase==='setup'?`<div class="tile-tools"><button class="icon" data-edit-item="${index}" aria-label="${empty?'Enter a topic':'Edit '+esc(item.text)}" title="Edit topic">${glyph(empty?'plus':'pencil')}</button><button class="icon" data-shuffle-item="${index}" aria-label="Randomize topic ${index+1}" title="Random topic">${glyph('shuffle')}</button></div>`:''}</li>`;
+  return `<li class="topic-tile ${empty?'empty':''}" data-id="${esc(item.id)}" style="--i:${index}">${ranking?`<span class="tile-number">${index+1}</span>`:''}<span class="tile-text">${empty?'Choose a topic':esc(item.text)}</span>${ranking?`<div class="rank-tools"><button class="icon" data-move="${index}" data-direction="-1" aria-label="Move ${esc(item.text)} up" ${index===0?'disabled':''}>${glyph('chevron-up')}</button><button class="icon" data-move="${index}" data-direction="1" aria-label="Move ${esc(item.text)} down" ${index===3?'disabled':''}>${glyph('chevron-down')}</button></div>`:B.room.phase==='setup'?`<div class="tile-tools"><button class="icon" data-edit-item="${index}" aria-label="${empty?'Enter a topic':'Edit '+esc(item.text)}" title="Edit topic">${glyph(empty?'plus':'pencil')}</button><button class="icon" data-shuffle-item="${index}" aria-label="Randomize topic ${index+1}" title="Random topic">${glyph('shuffle')}</button></div>`:''}</li>`;
  }
  function render(){
   renderStatus();renderProgress();$('#room-label').textContent=roomId==='table'?'Table':roomId.replaceAll('-',' ');
   if(!B.room){$('#game').innerHTML=`<div class="loading-bars" aria-label="Loading"><span></span><span></span><span></span><span></span></div>${B.status==='error'?'<button data-retry>Retry connection</button>':''}`;return;}
-  const room=B.room,ranking=mine()&&room.phase==='ranking';
+  if(dragging)return;
+  const room=B.room;
+  if(!['ranking','discuss'].includes(room.phase)||mine())guessEditing=false;
+  const ranking=(mine()&&pickerVisible&&room.phase==='ranking')||guessEditing;
   // Firestore map key order can change on reconnect without any actual game change.
-  const sig=JSON.stringify([room.id,room.roundId,room.revision,room.phase,room.picker,room.owner,room.items.map(i=>[i.id,i.text,i.topicId]),room.revealed,ranking?order():null,busy]);if(sig===signature){if(modalKind==='topics')renderTopics();return;}signature=sig;
+  const sig=JSON.stringify([room.id,room.roundId,room.revision,room.phase,room.picker,room.owner,room.items.map(i=>[i.id,i.text,i.topicId]),room.revealed,ranking?activeOrder():null,busy,prefs.name,pickerVisible,guessEditing]);if(sig===signature){if(modalKind==='topics')renderTopics();return;}signature=sig;
   sorter?.destroy();sorter=null;
-  const named=room.picker?esc(room.picker):'The Star';
+  const named=room.picker?esc(room.picker):'The picker';
+  $('#player-controls').innerHTML=`<button class="text-link player-name" data-player-name>${glyph('user-round')} ${esc(prefs.name||'Your name')}</button><button class="${mine()&&pickerVisible?'primary':'secondary'} picker-control" data-select-picker aria-pressed="${mine()&&pickerVisible}">${glyph(mine()?'user-check':'hand')} ${mine()?(pickerVisible?'I’m the picker':'Show my picker view'):'I’m the picker'}</button>${room.owner&&!mine()?`<p class="fine current-picker">${named} is the picker</p>`:''}${room.phase==='setup'?`<label class="toggle guess-toggle">Individual guesses<input type="checkbox" id="guessing" ${room.guessesEnabled?'checked':''} ${busy?'disabled':''}></label>`:''}`;
   let heading,sub,actions='';
   if(room.phase==='setup'){
-   heading='Pick four.';sub='';actions=`<button class="secondary" data-draw>${glyph('shuffle')} Four random topics</button><button class="primary" data-claim ${room.items.some(i=>!i.text)?'disabled':''}>${glyph('sparkles')} I’m the Star</button>`;
-  }else if(ranking){heading='Your favorites, in order.';sub='Only on your phone';actions=`<button class="primary" data-ready>${glyph('eye-off')} Ready · hide my ranking</button>`;}
+   heading='Pick four.';sub='';actions=`<button class="secondary" data-draw>${glyph('shuffle')} Four random topics</button>${mine()?`<button class="primary" data-claim ${room.items.some(i=>!i.text)?'disabled':''}>${glyph('sparkles')} Rank privately</button>`:''}`;
+  }else if(guessEditing){heading='Your guess.';sub=`${named}’s favorites, best to least`;actions='<button class="primary" data-save-guess>Save my guess</button><button class="text-link" data-cancel-guess>Back to the table</button>';}
+  else if(ranking){heading='Your favorites, in order.';sub='Only on your phone';actions=`<button class="primary" data-ready>${glyph('eye-off')} Ready · hide my ranking</button>`;}
   else if(room.phase==='ranking'){heading=`${named} is ranking.`;sub='Talk amongst yourselves.';}
-  else if(room.phase==='discuss'){heading='What’s the order?';sub=mine()?'Your ranking is hidden.':'Make your case.';if(mine())actions=`<button class="primary" data-reveal>${glyph('sparkles')} Reveal least favorite</button><button class="text-link" data-rerank>Adjust my ranking</button>`;}
+  else if(room.phase==='discuss'){heading='What’s the order?';sub=mine()?'Your ranking is hidden.':'Make your case.';if(mine()&&pickerVisible)actions=`<button class="primary" data-reveal>${glyph('sparkles')} Reveal least favorite</button><button class="text-link" data-rerank>Adjust my ranking</button>`;}
   else{heading=room.phase==='done'?'Well, there it is.':'The plot thickens.';sub=room.picker?`${named}’s preferences`:'';if(mine()&&room.phase!=='done')actions=`<button class="primary" data-reveal>${glyph('sparkles')} ${room.revealed.length===3?'Reveal the favorite':'Reveal next'}</button><button class="text-link" data-reveal-all>Reveal all</button>`;if(room.phase==='done')actions=`<button class="primary" data-next>${glyph('rotate-cw')} Next round</button>`;}
   let body;
   if(['reveal','done'].includes(room.phase))body=`<ol class="topic-list revealed-list">${[0,1,2,3].map(i=>{const id=room.revealed[3-i],item=room.items.find(t=>t.id===id);return `<li class="topic-tile reveal-tile ${item?'revealed':'unrevealed'}" style="--i:${i}" data-rank="${i+1}"><span class="tile-number">${i+1}</span><span class="tile-text">${item?esc(item.text):'…'}</span>${i===0?`<span class="favorite-icon">${glyph('heart')}</span>`:''}</li>`;}).join('')}</ol>`;
-  else body=`${ranking?'<div class="rank-label"><span>Most favorite</span><span>↓</span></div>':''}<ol id="topic-list" class="topic-list ${ranking?'ranking-list':''}">${(ranking?order().map(id=>room.items.find(i=>i.id===id)):room.items).map((item,i)=>tile(item,i,ranking)).join('')}</ol>${ranking?'<div class="rank-label rank-bottom">Least favorite</div>':''}`;
-  $('#game').innerHTML=`<div class="round-heading"><div><h2>${heading}</h2>${sub?`<p>${sub}</p>`:''}</div></div>${room.phase==='setup'?`<button class="picker-name text-link" data-picker>${room.picker?named+'’s turn':'Who’s the Star? (optional)'} ${glyph('pencil')}</button>`:''}${body}<div class="round-actions">${actions}</div>`;
-  if(ranking)sorter=new Sortable($('#topic-list'),{animation:220,handle:'.drag-handle',ghostClass:'drag-ghost',chosenClass:'drag-chosen',dragClass:'dragging',forceFallback:true,fallbackOnBody:true,onEnd(){const ids=[...$('#topic-list').children].map(el=>el.dataset.id);saveOrder(ids);refreshRankLabels();signature='';}});
+  else body=`${ranking?'<div class="rank-label"><span>Most favorite</span><span>↓</span></div>':''}<ol id="topic-list" class="topic-list ${ranking?'ranking-list':''}">${(ranking?activeOrder().map(id=>room.items.find(i=>i.id===id)):room.items).map((item,i)=>tile(item,i,ranking)).join('')}</ol>${ranking?'<div class="rank-label rank-bottom">Least favorite</div>':''}`;
+  if(room.guessesEnabled&&!mine()&&!guessEditing&&['ranking','discuss'].includes(room.phase))actions+=`<button class="secondary" data-guess>${glyph('list-ordered')} ${room.guesses?.[device]?'Edit my guess':'Make my guess'}</button>`;
+  const guesses=Object.values(room.guesses||{}),results=room.phase==='done'&&room.guessesEnabled?`<section class="guess-results"><h3>How did we guess?</h3>${guesses.length?guesses.map(g=>({...g,correct:g.order.filter((id,i)=>id===room.revealed[3-i]).length})).sort((a,b)=>b.correct-a.correct||a.name.localeCompare(b.name)).map(g=>`<div><span>${esc(g.name)}</span><strong>${g.correct===4?'Perfect match!':g.correct+' / 4'}</strong></div>`).join(''):'<p class="fine">No guesses this round.</p>'}</section>`:'';
+  $('#game').innerHTML=`<div class="round-heading"><div><h2>${heading}</h2>${sub?`<p>${sub}</p>`:''}</div></div>${body}<div class="round-actions">${actions}</div>${room.guessesEnabled&&['ranking','discuss'].includes(room.phase)?`<p class="fine guess-count">${guesses.length} ${guesses.length===1?'guess':'guesses'} saved</p>`:''}${results}`;
+  if(ranking){const roundId=room.roundId;sorter=new Sortable($('#topic-list'),{animation:220,filter:'button,input,a',preventOnFilter:false,fallbackTolerance:5,ghostClass:'drag-ghost',chosenClass:'drag-chosen',dragClass:'dragging',forceFallback:true,fallbackOnBody:true,onStart(){dragging=true;},onEnd(){const ids=[...$('#topic-list').children].map(el=>el.dataset.id);if(B.room.roundId===roundId)saveActiveOrder(ids);dragging=false;refreshRankLabels();signature='';requestAnimationFrame(render);}});}
   if(lastPhase!==room.phase){document.body.dataset.phase=room.phase;if(room.phase==='done'&&lastPhase)celebrate();lastPhase=room.phase;}
-  if(busy)$('#game').querySelectorAll('button').forEach(button=>button.disabled=true);
+  if(busy)document.querySelectorAll('#game button,#player-controls button,#player-controls input').forEach(button=>button.disabled=true);
   $('.new-round').disabled=busy;
   icons();if(modalKind==='topics')renderTopics();
  }
  function celebrate(){if(prefs.motion==='off'||matchMedia('(prefers-reduced-motion: reduce)').matches)return;$('#confetti').innerHTML=Array.from({length:prefs.motion==='ridiculous'?70:24},(_,i)=>`<span style="--x:${Math.random()*100}%;--delay:${Math.random()*.4}s;--color:${['#ee6c65','#e3b93c','#3a9f91','#5882cc'][i%4]};--spin:${Math.random()*720}deg"></span>`).join('');setTimeout(()=>$('#confetti').replaceChildren(),2400);}
  function modal(title,html,buttons='',kind='',data=null){modalKind=kind;modalData=data;$('#modal-title').textContent=title;$('#modal-body').innerHTML=html;$('#modal-footer').innerHTML=`<p id="modal-error" role="alert" hidden></p>${buttons}`;$('#modal').showModal();$('#modal').scrollTop=0;icons();}
  function close(){modalKind='';modalData=null;$('#modal').close();}
- function confirm(title,message,action){modal(title,`<p>${esc(message)}</p>`,`<button data-close>Cancel</button><button class="primary" data-confirm>Continue</button>`,'confirm',action);}
+ function playerName(after){modal('What’s your name?',`<label>Name<input id="player-name" maxlength="50" value="${esc(prefs.name||'')}" autocomplete="given-name"></label>`,`<button data-close>Cancel</button><button class="primary" data-save-name>Save</button>`,'name',after);$('#player-name').focus();}
+ function selectPicker(){
+  if(!C.text(prefs.name))return playerName(selectPicker);
+  if(mine()){pickerVisible=!pickerVisible;signature='';render();return;}
+  const room=B.room,owner=room.owner,roundId=room.roundId;
+  const take=async()=>{const ok=await run(()=>command('select-picker',{device,name:prefs.name,takeover:true,expectedOwner:owner,expectedRoundId:roundId,roundId:crypto.randomUUID()}));if(ok){pickerVisible=true;guessEditing=false;saveOrder(B.room.items.map(i=>i.id));close();signature='';render();}};
+  if(room.phase!=='setup')return confirm('Become the picker?',`${room.picker||'Someone else'} is already the picker. Taking over restarts ranking for these four topics and clears guesses. Their private answers will not be shown.`,take,'Become picker');
+  return run(async()=>{await command('select-picker',{device,name:prefs.name});pickerVisible=true;guessEditing=false;});
+ }
+ function confirm(title,message,action,label='Continue'){modal(title,`<p>${esc(message)}</p>`,`<button data-close>Cancel</button><button class="primary" data-confirm>${esc(label)}</button>`,'confirm',action);}
  function editItem(index){const item=B.room.items[index];modal('Edit topic',`<label>Topic<textarea id="item-text" maxlength="140" rows="3" placeholder="Sleeping with your socks on">${esc(item.text)}</textarea></label><label class="toggle">Save to the topic library<input id="save-topic" type="checkbox"></label>`,`<button data-close>Cancel</button><button class="primary" data-save-item>Save</button>`,'item',{index,revision:B.room.revision});$('#item-text').focus();}
  function topicEditor(id){const topic=B.topics.find(t=>t.id===id);modal(topic?'Edit topic':'Add topic',`<label>Topic<textarea id="topic-text" rows="3" maxlength="140">${esc(topic?.text||'')}</textarea></label><label>Category<input id="topic-category" maxlength="40" value="${esc(topic?.category||'From the table')}"></label>`,`<button data-topics>Back</button><button class="primary" data-save-topic>Save topic</button>`,'topic',topic||{});$('#topic-text').focus();}
  function topics(){topicSearch='';topicFilter='active';modal('Topic library',`<div class="library-tools"><input type="search" id="topic-search" aria-label="Search topics" placeholder="Search topics…"><button class="icon" data-new-topic aria-label="Add topic" title="Add topic">${glyph('plus')}</button></div><div class="library-filters"><button class="text-link" data-topic-filter="active" aria-pressed="true">Available</button><button class="text-link" data-topic-filter="archived" aria-pressed="false">Removed</button><button class="icon" data-export-topics aria-label="Export topic library" title="Export JSON">${glyph('download')}</button></div><div id="topic-results" aria-live="polite"></div>`,`<button class="primary" data-close>Done</button>`,'topics');renderTopics();}
@@ -78,12 +97,16 @@
   if(button.matches('[data-draw],[data-shuffle-item]'))return run(()=>command('items',{items:C.draw(B.topics,B.room.items,button.hasAttribute('data-draw')?[0,1,2,3]:[Number(button.dataset.shuffleItem)],B.room.seen)}));
   if(button.matches('[data-edit-item]'))return editItem(Number(button.dataset.editItem));
   if(button.matches('[data-save-item]')){const draft=modalData,text=$('#item-text').value,save=$('#save-topic').checked;const ok=await run(async()=>{if(B.room.phase!=='setup'||B.room.revision!==draft.revision)throw Error('This round changed while you were editing. Close and reopen the topic.');const clean=C.validateTopic(text),items=C.clone(B.room.items);items[draft.index]={...items[draft.index],text:clean,topicId:null};C.apply(B.room,{type:'items',payload:{items,expectedRevision:B.room.revision}});if(save&&!B.topics.some(t=>!t.archived&&C.normalized(t.text)===C.normalized(clean)))await B.topic({text:clean});await command('items',{items});});if(ok)close();return;}
-  if(button.matches('[data-picker]'))return modal('Whose turn?',`<label>Name<input id="picker-name" maxlength="50" value="${esc(B.room.picker)}" autocomplete="off" placeholder="Optional"></label>`,`<button data-close>Cancel</button><button class="primary" data-save-picker>Save</button>`,'picker');
-  if(button.matches('[data-save-picker]')){const name=$('#picker-name').value;if(await run(()=>command('picker',{name})))close();return;}
-  if(button.matches('[data-claim]')){saveOrder(B.room.items.map(i=>i.id));return run(()=>command('claim',{device}));}
+  if(button.matches('[data-player-name]'))return playerName();
+  if(button.matches('[data-select-picker]'))return selectPicker();
+  if(button.matches('[data-save-name]')){const name=C.text($('#player-name').value);if(!name)return toast('Enter your name first.');const after=modalData;if(mine()&&!await run(()=>command('rename-picker',{device,name})))return;prefs.name=name;savePrefs();close();signature='';render();if(typeof after==='function')after();return;}
+  if(button.matches('[data-claim]')){saveOrder(B.room.items.map(i=>i.id));pickerVisible=true;return run(()=>command('claim',{device,name:prefs.name}));}
+  if(button.matches('[data-guess]')){const begin=()=>{guessEditing=true;signature='';render();};if(!C.text(prefs.name))return playerName(begin);return begin();}
+  if(button.matches('[data-cancel-guess]')){guessEditing=false;signature='';return render();}
+  if(button.matches('[data-save-guess]')){if(await run(()=>command('guess',{device,name:prefs.name,order:guessOrder()}))){guessEditing=false;signature='';render();}return;}
   if(button.matches('[data-ready]'))return run(()=>command('ready',{device}));
   if(button.matches('[data-rerank]'))return run(()=>command('rerank',{device}));
-  if(button.matches('[data-move]')){const ids=order(),index=Number(button.dataset.move),to=index+Number(button.dataset.direction);if(to>=0&&to<4){[ids[index],ids[to]]=[ids[to],ids[index]];saveOrder(ids);sorter?.sort(ids,true);refreshRankLabels();signature='';}return;}
+  if(button.matches('[data-move]')){const ids=activeOrder(),index=Number(button.dataset.move),to=index+Number(button.dataset.direction);if(to>=0&&to<4){[ids[index],ids[to]]=[ids[to],ids[index]];saveActiveOrder(ids);sorter?.sort(ids,true);refreshRankLabels();signature='';}return;}
   if(button.matches('[data-reveal]'))return reveal();if(button.matches('[data-reveal-all]'))return reveal(true);
   if(button.matches('[data-next]'))return run(()=>command('reset',{roundId:crypto.randomUUID()}));
   if(button.matches('[data-reset]'))return confirm('Start a new round?','This clears these four topics and any private ranking. Your topic library stays.',async()=>{if(await run(()=>command('reset',{roundId:crypto.randomUUID()})))close();});
@@ -104,7 +127,7 @@
   if(button.matches('[data-retry]')){close();return connect();}
  });
  document.addEventListener('input',event=>{if(event.target.id==='topic-search'){topicSearch=event.target.value;renderTopics();}});
- document.addEventListener('change',event=>{if(event.target.id==='motion'){prefs.motion=event.target.value;savePrefs();}});
+ document.addEventListener('change',event=>{if(event.target.id==='motion'){prefs.motion=event.target.value;savePrefs();}if(event.target.id==='guessing')run(()=>command('guessing',{enabled:event.target.checked}));});
  $('#modal').addEventListener('click',event=>{if(event.target!==$('#modal'))return;const r=$('#modal').getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)close();});
  $('#modal').addEventListener('cancel',()=>{modalKind='';modalData=null;});
  async function connect(){try{await B.open(roomId);}catch(error){B.status='error';B.error=error.message;render();}}

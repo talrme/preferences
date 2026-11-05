@@ -4,7 +4,7 @@
 
 **Repository:** [talrme/preferences](https://github.com/talrme/preferences)
 
-A phone-first dinner-table game: four topics, one person's private ranking, and everyone else arguing about what it will be. No scoring, individual guesses, timers or player registration.
+A phone-first dinner-table game: four topics, one person's private ranking, and everyone else arguing about what it will be. Optional individual guesses show who matched at the reveal; no cumulative scoring, timers or accounts.
 
 ## Current Design
 
@@ -12,17 +12,19 @@ A phone-first dinner-table game: four topics, one person's private ranking, and 
 
 ## Playing
 
-The person whose preferences everyone is guessing is **the Star**. A compact circle-and-line progress indicator follows **Choose → Rank → Discuss → Reveal**. It shows the shared round stage on every phone, not a clickable way to skip private steps. **New round** stays available above the game in every stage, with confirmation before clearing the current round; the library remains intact.
+The person whose preferences everyone is guessing is **the picker**. A compact circle-and-line progress indicator follows **Choose → Rank → Discuss → Reveal**. It shows the shared round stage on every phone, not a clickable way to skip private steps. **New round** stays available above the game in every stage, with confirmation before clearing the current round; the library remains intact.
 
-1. Tap **Four random topics**, draw individual topics with each shuffle icon, or enter your own using its pencil/plus. The optional Who's the Star? name labels whose turn it is.
-2. The Star taps **I'm the Star**. That locks the four topics for everyone. Rank from most favorite to least favorite by dragging the handles, or with the arrow buttons.
+1. Tap **Four random topics**, draw individual topics with each shuffle icon, or enter your own using its pencil/plus. Tap **I'm the picker** and enter your name; this browser remembers it. Choosing the picker does not lock topic editing yet.
+2. The picker taps **Rank privately**. That locks the four topics for everyone. Rank from most favorite to least favorite by grabbing anywhere on a card, or with the larger arrow buttons. Scroll using the space outside the ranking cards.
 3. Tap **Ready · hide my ranking**. All phones now show the original unranked topics for group discussion. Your secret ranking is saved only on your device.
 4. Reveal from least favorite up to favorite, one at a time. After the first answer, Reveal all is available too. Each step syncs to everyone; unrevealed answers are not sent to the database.
 5. Tap **Next round**. The room link stays the same. A circular-arrow control can reset a stuck/abandoned round after confirmation, without deleting topics.
 
 One phone works fine: rank privately, hide, and place it on the table. Other people can join the shared room using the QR at the bottom; tap the small QR to enlarge it. Links contain `?room=table` or your other room name. Settings has a Create/join room option. No login or room password is needed.
 
-Closing/reloading the picker's browser preserves its order on that same browser, origin and device. That secret order does **not** follow the picker onto another phone/browser. Clearing storage loses it. Other people cannot become the picker midway through a round through the UI; reset the round if its picker is unavailable. Firestore is intentionally public, so picker ownership is a cooperative UI rule, not an authorization boundary.
+Closing/reloading the picker's browser preserves its order on that same browser, origin and device. That secret order does **not** follow the picker onto another phone/browser. Clearing storage loses it. The picker control can locally hide/show the picker view without releasing ownership. Someone taking over mid-round must confirm: the same topics get a fresh ranking round, with guesses/reveals cleared and no access to the previous picker's private order. New round clears the picker so anyone can volunteer again. Firestore is intentionally public, so picker ownership is a cooperative UI rule, not an authorization boundary.
+
+**Individual guesses** is off by default and can be enabled before ranking. Other people can privately arrange their guess, then explicitly save it. Guesses close when revealing begins. At the end, names and correct positions out of four appear, including Perfect match. There is no lasting scoreboard. Names and draft guesses are remembered on the device; submitted guesses sync to the room. Unlike the picker's secret ranking, submitted guesses are stored in the public database; the UI hides them until the final reveal. The option stays enabled for the next round, but guesses reset.
 
 ## Permanent Topic Library
 
@@ -113,7 +115,7 @@ node tests/promotion.cjs
 
 Add `?demo=1` to a game URL for a clearly labeled, device-local sandbox. It uses a separate storage namespace, never imports the Firebase SDK, and never changes shared topics/rooms. QR/share/install links omit demo mode so they do not invite friends into a disconnected sandbox.
 
-The core tests validate the game state machine and200 unique starter topics. Browser tests run full rounds/library CRUD/settings/QR/private refresh on the main game at320/390/1280 widths. Firestore tests use unique `test-TIMESTAMP` environments and delete **only those** afterward. They test two-browser updates, private reorder without shared writes, incremental reveal, topic CRUD/restore and concurrent picker claims. Promotion tests verify horizontal icon pixels, the root manifest/share paths, preserved rankings and old option-one redirects. They are not physical-phone tests. Screenshots are saved under /tmp, not committed.
+The core tests validate the game state machine and200 unique starter topics. Browser tests run full rounds/library CRUD/settings/QR/private refresh on the main game at320/390/1280 widths. Firestore tests use unique `test-TIMESTAMP` environments and delete **only those** afterward. They test two-browser updates, private reorder without shared writes, guesses, incremental reveal, topic CRUD/restore and confirmed picker takeover. `node tests/ranking.cjs` exercises whole-card touch dragging, local picker-view hiding, remembered names and44px arrow targets. Promotion tests verify horizontal icon pixels, the root manifest/share paths, preserved rankings and old option-one redirects. They are not physical-phone tests. Screenshots are saved under /tmp, not committed.
 
 ## Assets And Dependencies
 

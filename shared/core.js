@@ -3,13 +3,13 @@
  const clone=value=>JSON.parse(JSON.stringify(value));
  const text=value=>String(value||'').trim().replace(/\s+/g,' ');
  const normalized=value=>text(value).toLocaleLowerCase();
- function initial(id,roundId){return {id,roundId,revision:0,phase:'setup',picker:'',owner:null,items:[0,1,2,3].map(i=>({id:'slot-'+i,text:'',topicId:null})),revealed:[],seen:[]};}
+ function initial(id,roundId){return {id,roundId,revision:0,phase:'setup',picker:'',owner:null,items:[0,1,2,3].map(i=>({id:'slot-'+i,text:'',topicId:null})),revealed:[],seen:[],guessesEnabled:false,guesses:{}};}
  function validateTopic(value){const clean=text(value);if(!clean||clean.length>140)throw Error('Use 1–140 characters for a topic.');return clean;}
  function apply(source,cmd){
   const state=clone(source),p=cmd.payload||{};
   if(p.expectedRevision!==state.revision)throw Error('Someone just changed this round. Please try again.');
   if(cmd.type==='reset'){
-   const next=initial(state.id,p.roundId);next.seen=state.seen;next.revision=state.revision+1;return next;
+   const next=initial(state.id,p.roundId);next.seen=state.seen;next.guessesEnabled=Boolean(state.guessesEnabled);next.revision=state.revision+1;return next;
   }
   if(cmd.type==='items'){
    if(state.phase!=='setup')throw Error('This round is locked. Start a new round to change the topics.');
@@ -18,13 +18,35 @@
    const nonempty=state.items.filter(i=>i.text);if(new Set(nonempty.map(i=>normalized(i.text))).size!==nonempty.length)throw Error('Those topics match. Try a different one.');
   }else if(cmd.type==='picker'){
    if(state.phase!=='setup')throw Error('This round has already started.');state.picker=text(p.name).slice(0,50);
+  }else if(cmd.type==='select-picker'){
+   if(!p.device||!text(p.name))throw Error('Enter your name first.');
+   if(state.phase!=='setup'){
+    if(!p.takeover||p.expectedOwner!==state.owner||p.expectedRoundId!==state.roundId)throw Error('The picker changed. Please try again.');
+    if(!p.roundId||p.roundId===state.roundId)throw Error('A takeover needs a new ranking.');
+    state.roundId=p.roundId;state.phase='ranking';state.revealed=[];state.guesses={};
+   }
+   state.owner=p.device;state.picker=text(p.name).slice(0,50);
+  }else if(cmd.type==='rename-picker'){
+   if(state.owner!==p.device)throw Error('Only the picker can change their name.');
+   if(!text(p.name))throw Error('Enter your name first.');state.picker=text(p.name).slice(0,50);
+  }else if(cmd.type==='guessing'){
+   if(state.phase!=='setup')throw Error('Change guessing mode before ranking starts.');
+   state.guessesEnabled=Boolean(p.enabled);state.guesses={};
+  }else if(cmd.type==='guess'){
+   if(!state.guessesEnabled||!['ranking','discuss'].includes(state.phase))throw Error('Guesses are closed for this round.');
+   if(state.owner===p.device)throw Error('The picker cannot guess their own ranking.');
+   if(!p.device||!text(p.name))throw Error('Enter your name first.');
+   if(!Array.isArray(p.order)||p.order.length!==4||new Set(p.order).size!==4||p.order.some(id=>!state.items.some(i=>i.id===id)))throw Error('Rank all four topics in your guess.');
+   state.guesses||={};if(!state.guesses[p.device]&&Object.keys(state.guesses).length>=50)throw Error('This round already has 50 guesses.');
+   state.guesses[p.device]={name:text(p.name).slice(0,50),order:[...p.order]};
   }else if(cmd.type==='claim'){
    if(state.phase!=='setup')throw Error('Someone is already ranking this round.');
+   if(state.owner&&state.owner!==p.device)throw Error('Someone else is the picker. Select the picker control to take over.');
    if(state.items.some(i=>!i.text))throw Error('Choose all four topics first.');
-   if(!p.device)throw Error('This device could not be identified.');state.owner=p.device;state.phase='ranking';
+   if(!p.device)throw Error('This device could not be identified.');state.owner=p.device;state.phase='ranking';if(p.name)state.picker=text(p.name).slice(0,50);
    state.seen=[...new Set([...state.seen,...state.items.map(i=>i.topicId).filter(Boolean)])].slice(-500);
   }else{
-   if(state.owner!==p.device)throw Error('Only the Star can do that.');
+   if(state.owner!==p.device)throw Error('Only the picker can do that.');
    if(cmd.type==='ready'){
     if(state.phase!=='ranking')throw Error('This round is not ready for that.');state.phase='discuss';
    }else if(cmd.type==='rerank'){

@@ -4,6 +4,22 @@
 @media(max-width:359px){.app{padding:16px 12px 24px}h1{font-size:23px}.identity{gap:7px}.identity img{width:29px;height:29px}.room-link{max-width:95px}.tile-text{font-size:16px}.topic-tile{padding:12px 9px;gap:6px}.rank-tools .icon{width:26px;min-width:26px;padding:3px}.tile-number{width:17px;flex-basis:17px}.footer-tools{gap:3px 10px}.footer-tools button{font-size:10px}.palettes{gap:11px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 .ranking-list .topic-tile{animation:none!important}
+.ranking-list .topic-tile{touch-action:none;cursor:grab;user-select:none}
+.ranking-list .topic-tile:active{cursor:grabbing}
+.rank-tools{flex-direction:column;gap:2px}
+.rank-tools .icon{width:44px;min-width:44px;height:44px;min-height:44px;padding:8px;background:var(--soft)}
+.rank-tools svg{width:23px;height:23px}
+.player-controls{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px 12px;margin:0 0 22px}
+.player-name{justify-self:start;min-width:0;overflow-wrap:anywhere;text-align:left}
+.player-name svg{width:15px}
+.picker-control{font-size:13px;max-width:210px}
+.current-picker{grid-column:1 / -1;text-align:right}
+.guess-toggle{grid-column:1 / -1;margin-top:7px;font-size:12px}
+.guess-count{text-align:center;margin-top:12px}
+.guess-results{margin-top:24px;border-top:1px solid var(--line);padding-top:16px}
+.guess-results>div{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.guess-results span{overflow-wrap:anywhere;min-width:0}
+.guess-results strong{flex-shrink:0;color:var(--accent);font-size:13px}
 .round-progress{margin:0 0 2px}
 .round-progress ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));position:relative;isolation:isolate}
 .round-progress ol:before,.round-progress ol:after{content:'';position:absolute;top:12px;left:12.5%;height:2px;z-index:-1}
