@@ -216,4 +216,6 @@ body[data-palette=night] .step-error{color:#ffb1bf}
 .room-invite .qr-reminder{margin:0;max-width:220px;text-align:right;flex-shrink:1;min-width:0}
 .room-invite .qr-small{flex-shrink:0}
 .revealed-list .reveal-tile.revealed{background:var(--tile);border-color:var(--line)}
+.connection.quota{color:#a1223e;line-height:1.5;max-width:460px}
+body[data-palette=night] .connection.quota{color:#ffb1bf}
 @media(max-width:359px){.footer-tools button{font-size:10px}.room-invite{gap:8px}.room-invite .qr-reminder{font-size:16px}}

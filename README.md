@@ -94,11 +94,21 @@ preferences/main/rooms/ROOM_ID        # four topics, round ID, phase, picker dev
 
 The room document never contains undisclosed private answers. During reveal it contains only the IDs revealed so far, in favorite-first order. A direction flag keeps older, already-partially-revealed bottom-up rounds compatible until they finish. The public discussion order is a separate group guess. `lastActivityAt` uses a Firestore server timestamp for shared room actions, and numeric milliseconds in local mode. All normal browser writes are transactions. Shared edits are not shown as successfully saved until acknowledged; stale room/topic edits show an error instead of silently overwriting a newer action. Private ranking movements save locally without network writes.
 
-Live listeners deliver changes without interval polling. Hidden tabs unsubscribe and reconnect when brought back, keeping the current game and open drafts visible instead of replacing them with the startup loader. Returning only reconnects listeners: seed/library initialization and room-creation checks are cached for the page lifetime, not rerun on every tab switch. Rapid returns/online events are coalesced, and obsolete callbacks are ignored. A small Reconnecting status remains until server snapshots confirm freshness. Same-content snapshots do not remount the list just because Firestore map key order differs. A first full page load still needs initial setup checks; none of this labels cached data as freshly synced.
+Live listeners deliver changes without interval polling. There are now two document listeners: the current room and the packed topic library at `preferences/main/library/current`. A normal open after migration reads those two documents, rather than rereading roughly200 topic documents. Library edits use one transaction/write; game actions still update only the room. Quick tab switches retain listeners; after a minute hidden, the app disconnects and resumes when opened. No periodic sync timer runs.
+
+The first successful connection after this update migrates existing topic documents into the single library document, preserving custom edits and archived items. It reads the old collection once and creates one packed document transactionally; it does not delete the old documents. New installations create one room document and one library document, not200 topic documents. Refresh all open phones after updating so they use the new library format. The migration cannot complete while Firebase is rejecting requests for quota.
+
+Last-confirmed public room/library snapshots are cached locally for read-only display. Offline/quota states never pretend to save shared changes. Cached data is not marked live until both server snapshots confirm freshness. Quota errors stop listeners and automatic reconnect attempts for15 minutes (across refreshes), with no retry timer; explicit **Reconnect** in Advanced settings can retry earlier. Ordinary changes/conflicts remain explicitly acknowledged by Firestore.
+
+### Quota Errors
+
+`resource-exhausted: Quota exceeded` means Firestore has rejected a request, not that game data was erased. Free daily allowances are50,000 document reads,20,000 writes and20,000 deletes, resetting around midnight Pacific time; see [Firebase usage limits](https://firebase.google.com/docs/firestore/quotas). Check your project's Firestore **Usage** tab to identify which allowance is exhausted. If it is a daily limit, code cannot replenish it: wait for the reset or choose paid billing yourself. This update does not enable billing.
+
+The previous topic collection listener could reread roughly200 records per reload/reconnect, and integration tests seeded/deleted200 topics in the same project. Both sources of avoidable usage are removed. Integration tests are now emulator-only with a `demo-` project ID and refuse to run against the real project. Cached/sandbox/SDK-fixture tests consume no Firestore quota. Public access still permits other clients to consume quota; abuse protection/authentication would be a separate decision.
 
 Offline status is explicit, and coming back online reconnects without a manual refresh. Shared actions need connectivity and are **not** a durable offline outbox: if saving fails, retry the action when connected. No silent local fallback is used when Firebase is configured but unavailable. This avoids showing a separate fake shared game. The local sandbox below is separate and clearly labeled.
 
-The owner explicitly requested unauthenticated public read/write access. Anyone can read/change/delete topics or rounds, bypass validation, or consume quota. Do not store sensitive information. Passwords, admin roles, trusted validation, App Check and automatic backups are not implemented. All topics are loaded when opening; pagination is future work if the library grows dramatically.
+The owner explicitly requested unauthenticated public read/write access. Anyone can read/change/delete topics or rounds, bypass validation, or consume quota. Do not store sensitive information. Passwords, admin roles, trusted validation, App Check and automatic backups are not implemented. The small topic library is stored in one document (guarded below800KB on edits); split/paginate it if the library eventually grows substantially. Legacy per-topic documents are left untouched but no longer drive the current app.
 
 ## Recreating Firebase: Step By Step
 
@@ -149,13 +159,25 @@ Open [the local game](http://127.0.0.1:5196/). Build requires `sharp`; browser t
 ```sh
 node tests/core.test.cjs
 node tests/browser.cjs
-node tests/firestore.cjs
+node tests/backend-quota.cjs
 node tests/promotion.cjs
 ```
 
+`backend-quota.cjs` intercepts the Firebase SDK with a deterministic fixture and verifies migration, operation counts and quota handling without touching Firebase. The full Firestore test is now **emulator-only** and skips before opening a browser unless `FIRESTORE_EMULATOR_HOST` is set. A separate test collection in the real project still consumes that project's quota; do not re-enable real-project integration tests.
+
+Optional full integration testing requires Java21+ and the Firebase CLI (not required for hosting or using this website):
+
+```sh
+firebase emulators:start --only firestore --project demo-preferences
+# In another terminal, with the local website server running:
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node tests/firestore.cjs
+```
+
+The checked-in `firebase.json`/`tests/emulator.rules` configure the local emulator. The test replaces the real config with `demo-preferences` and only allows a loopback emulator. Never deploy test configuration/rules or switch the test back to the real project to get a passing result.
+
 Add `?demo=1` to a game URL for a clearly labeled, device-local sandbox. It uses a separate storage namespace, never imports the Firebase SDK, and never changes shared topics/rooms. QR/share/install links omit demo mode so they do not invite friends into a disconnected sandbox.
 
-The core tests validate the game state machine and200 unique starter topics. Browser tests run full rounds/library CRUD/settings/QR/private refresh on the main game at320/390/1280 widths. Firestore tests use unique `test-TIMESTAMP` environments and delete **only those** afterward. They test two-browser updates, private reorder without shared writes, guesses, incremental reveal, topic CRUD/restore, confirmed picker takeover and clearing the picker's name across devices. `node tests/ranking.cjs` exercises whole-card touch dragging, opaque dragged cards, local picker-view hiding, remembered names and44px arrow targets. `node tests/flow.cjs` covers the single-main-action flow, progress placement, optional menu and persistent name removal. `node tests/editor.cjs` checks phone editor positioning and Save visibility with simulated keyboard space. Promotion tests verify horizontal icon pixels, the root manifest/share paths, preserved rankings and old option-one redirects. They are not physical-phone tests. Screenshots are saved under /tmp, not committed.
+The core tests validate the game state machine and200 unique starter topics. Browser tests run full rounds/library CRUD/settings/QR/private refresh in the local sandbox at320/390/1280 widths. Firestore tests use isolated namespaces **only inside the local emulator** and never use real project quota. They test two-browser updates, private reorder without shared writes, guesses, incremental reveal, topic CRUD/restore, confirmed takeover and clearing profiles. `node tests/ranking.cjs` exercises touch scrolling/hold-to-drag, opaque dragged cards, private-view hiding, remembered names and44px arrows. `node tests/flow.cjs` covers the single-main-action flow and name removal. `node tests/editor.cjs` checks phone editor positioning and Save with simulated keyboard space. Promotion tests verify icons, root manifest/share paths, preserved rankings and old redirects. They are not physical-phone tests. Screenshots stay under /tmp, not committed.
 
 ## Assets And Dependencies
 

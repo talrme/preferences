@@ -42,9 +42,9 @@
   try{await fn();return true;}catch(error){toast(error.code==='permission-denied'?'Database access is blocked. Check Firebase rules, then retry.':error.message);return false;}finally{busy=false;options.forEach(([el,disabled])=>el.disabled=disabled);signature='';render();}
  }
  async function command(type,payload={}){return B.command({type,payload:{...payload,expectedRevision:B.room.revision}});}
- function renderStatus(){const state=B.status,node=$('#connection');node.className='connection '+state;node.hidden=state==='live'||state==='loading';node.textContent=state==='live'?'':state==='sandbox'?'Sandbox · only on this device':state==='local'?'On this device · sharing is not connected':state==='reconnecting'?'Reconnecting with your table…':state==='offline'?'Offline · shared changes need a connection':state==='error'?'Not connected · '+(B.error||'retry in Settings'):'';}
+ function renderStatus(){const state=B.status,node=$('#connection');node.className='connection '+state;node.hidden=state==='live'||state==='loading';node.textContent=state==='live'?'':state==='sandbox'?'Sandbox · only on this device':state==='local'?'On this device · sharing is not connected':state==='reconnecting'?'Reconnecting with your room…':state==='offline'?'Offline · shared changes need a connection':state==='quota'?B.error:state==='error'?'Not connected · '+(B.error||'retry in Settings'):'';}
  function renderProgress(){
-  $('.new-round').disabled=busy||!B.room;
+  $('.new-round').disabled=busy||!B.room||(B.live&&B.status!=='live');
   $('.round-utility [data-round-options]').disabled=busy||!B.room;
   const phase=B.room?.phase,index=({setup:0,ranking:1,discuss:2,reveal:3,done:3})[phase]??0;
   const list=$('#progress-steps');list.style.setProperty('--stage',index);
@@ -58,7 +58,7 @@
  }
  function render(){
   renderStatus();$('#player-name-label').textContent=prefs.name||'Your name';const nameButton=$('.header-name');nameButton.disabled=busy||!B.room;nameButton.title=prefs.name?'Your profile: '+prefs.name:'Set your name and avatar';const avatarNode=$('#player-avatar');if(avatarNode.dataset.avatar!==prefs.avatar){avatarNode.dataset.avatar=prefs.avatar;avatarNode.innerHTML=avatarIcon(prefs.avatar)||glyph('user-round');icons();}
-  if(!B.room){renderProgress();$('#game').innerHTML=`<div class="loading-bars" aria-label="Loading"><span></span><span></span><span></span><span></span></div>${B.status==='error'?'<button data-retry>Retry connection</button>':''}`;return;}
+  if(!B.room){renderProgress();$('#game').innerHTML=['error','quota'].includes(B.status)?'<button data-retry>Reconnect</button>':'<div class="loading-bars" aria-label="Loading"><span></span><span></span><span></span><span></span></div>';return;}
   if(dragging)return;
   const room=B.room;
   if(lastRoundId&&lastRoundId!==room.roundId){pickerVisible=true;guessEditing=false;if($('#modal').open&&!['topics','topic','settings','share'].includes(modalKind))close();window.scrollTo(0,0);}
@@ -69,7 +69,8 @@
   renderProgress();
   const ranking=(mine()&&pickerVisible&&room.phase==='ranking')||guessEditing,discussion=discussionMode(),ordering=ranking||discussion;
   // Firestore map key order can change on reconnect without any actual game change.
-  const sig=JSON.stringify([room.id,room.roundId,room.revision,room.phase,room.picker,room.owner,room.items.map(i=>[i.id,i.text,i.topicId]),room.revealed,ordering?activeOrder():null,busy,prefs.name,prefs.avatar,pickerVisible,guessEditing]);if(sig===signature){if(modalKind==='topics')renderTopics();return;}signature=sig;
+  const readOnly=B.live&&B.status!=='live';
+  const sig=JSON.stringify([room.id,room.roundId,room.revision,room.phase,room.picker,room.owner,room.items.map(i=>[i.id,i.text,i.topicId]),room.revealed,ordering?activeOrder():null,busy,readOnly,prefs.name,prefs.avatar,pickerVisible,guessEditing]);if(sig===signature){if(modalKind==='topics')renderTopics();return;}signature=sig;
   const discussionPositions=new Map([...document.querySelectorAll('.discussion-list .topic-tile')].map(node=>[node.dataset.id,node.getBoundingClientRect().top]));
   sorter?.destroy();sorter=null;
   const named=room.picker?esc(room.picker):'The ranker',complete=room.items.every(i=>i.text),canGuess=room.guessesEnabled&&!mine()&&!room.revealStarted&&!room.revealed.length&&['ranking','discuss'].includes(room.phase);
@@ -95,11 +96,12 @@
   $('#game').innerHTML=`<div class="round-heading"><div><h2>${heading}</h2>${sub?`<p>${sub}</p>`:''}</div><div class="round-heading-tools">${room.phase==='setup'&&complete?`<button class="icon quiet" data-draw title="Draw four new topics" aria-label="Draw four new topics">${glyph('shuffle')}</button>`:''}</div></div>${notice?`<aside class="stage-notice" aria-label="Current step">${notice}</aside>`:''}${extras}${body}<div class="round-actions step-navigation">${actions}</div>${room.guessesEnabled&&['ranking','discuss'].includes(room.phase)?`<p class="fine guess-count">${guesses.length} ${guesses.length===1?'guess':'guesses'} saved${room.revealStarted?' · locked':''}</p>`:''}`;
   $('.step-navigation').insertAdjacentHTML('afterend','<p id="step-error" class="step-error" role="alert" hidden></p>');
   $('#round-results').innerHTML=results;
-  if(ordering){const roundId=room.roundId;sorter=new Sortable($('#topic-list'),{animation:M.enabled(prefs,'reorder')?220:0,delay:300,delayOnTouchOnly:true,touchStartThreshold:8,filter:'button,input,a',preventOnFilter:false,fallbackTolerance:5,ghostClass:'drag-ghost',chosenClass:'drag-chosen',dragClass:'dragging',forceFallback:true,fallbackOnBody:true,onStart(){dragging=true;},async onEnd(event){const ids=[...$('#topic-list').children].map(el=>el.dataset.id);dragging=false;signature='';if(discussion){if(event.oldIndex!==event.newIndex)await moveDiscussion(event.item.dataset.id,ids[event.newIndex+1]||null,roundId);else render();}else{if(B.room.roundId===roundId)saveActiveOrder(ids);render();}M.pop(prefs,'reorder',$('#topic-list')?.children[event.newIndex]);}});}
+  if(ordering){const roundId=room.roundId;sorter=new Sortable($('#topic-list'),{disabled:busy||readOnly,animation:M.enabled(prefs,'reorder')?220:0,delay:300,delayOnTouchOnly:true,touchStartThreshold:8,filter:'button,input,a',preventOnFilter:false,fallbackTolerance:5,ghostClass:'drag-ghost',chosenClass:'drag-chosen',dragClass:'dragging',forceFallback:true,fallbackOnBody:true,onStart(){dragging=true;},async onEnd(event){const ids=[...$('#topic-list').children].map(el=>el.dataset.id);dragging=false;signature='';if(discussion){if(event.oldIndex!==event.newIndex)await moveDiscussion(event.item.dataset.id,ids[event.newIndex+1]||null,roundId);else render();}else{if(B.room.roundId===roundId)saveActiveOrder(ids);render();}M.pop(prefs,'reorder',$('#topic-list')?.children[event.newIndex]);}});}
   if(discussion&&!busy)document.querySelectorAll('.discussion-list .topic-tile').forEach(node=>{const previous=discussionPositions.get(node.dataset.id),delta=previous-node.getBoundingClientRect().top;if(Number.isFinite(delta)&&Math.abs(delta)>1)M.animate(prefs,'reorder',node,[{transform:`translateY(${delta}px)`},{transform:'none'}]);});
   if(lastPhase!==room.phase){document.body.dataset.phase=room.phase;window.scrollTo(0,0);lastPhase=room.phase;}
-  if(busy)document.querySelectorAll('#game button,#player-controls button,.topbar [data-player-name]').forEach(button=>button.disabled=true);
-  $('.new-round').disabled=busy;
+  if(busy||readOnly)document.querySelectorAll('#game button,#player-controls button').forEach(button=>button.disabled=true);
+  if(busy)$('.topbar [data-player-name]').disabled=true;
+  $('.new-round').disabled=busy||readOnly;
   icons();if(modalKind==='topics')renderTopics();if(!busy)animateRound(room);
  }
  function animateRound(room){
@@ -214,13 +216,13 @@
   if(button.matches('[data-table-settings]'))return settings('tables');
   if(button.matches('[data-new-room]'))return modal('Another room',`<label>Room name<input id="new-room" maxlength="40" placeholder="friday-dinner" autocomplete="off"></label>`,`<button data-close>Cancel</button><button class="primary" data-join-room>Open room</button>`,'room');
   if(button.matches('[data-join-room]')){const id=C.text($('#new-room').value).toLowerCase().replace(/\s+/g,'-');if(!/^[a-z0-9-]{1,40}$/.test(id))return toast('Use letters, numbers and hyphens for the room name.');return navigateRoom(id);}
-  if(button.matches('[data-retry]')){close();return connect();}
+  if(button.matches('[data-retry]')){close();return connect(true);}
  });
  document.addEventListener('input',event=>{if(event.target.id==='topic-search'){topicSearch=event.target.value;renderTopics();}if(event.target.id==='motion'){const preset=motionLevels[Number(event.target.value)];setAnimations(preset,preset==='custom'?prefs.customAnimations:M.presets[preset]);}});
  document.addEventListener('change',event=>{if(event.target.matches('[data-effect]'))setAnimations('custom',{...prefs.animations,[event.target.dataset.effect]:event.target.checked});if(event.target.id==='guessing')run(()=>command('guessing',{enabled:event.target.checked}));});
  $('#modal').addEventListener('click',event=>{if(event.target!==$('#modal'))return;const r=$('#modal').getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)close();});
  $('#modal').addEventListener('cancel',()=>{modalKind='';modalData=null;});
- async function connect(){try{await B.open(roomId);}catch(error){B.status='error';B.error=error.message;render();}}
+ async function connect(force=false){try{await B.open(roomId,{force});}catch{}}
  const manifestUrl=new URL(shareUrl()),scope=new URL('./',manifestUrl).pathname;
  const manifest={id:manifestUrl.pathname+manifestUrl.search,name:'Preferences · '+roomId,short_name:'Preferences',start_url:manifestUrl.href,scope,display:'standalone',background_color:'#f5f6f2',theme_color:'#377765',icons:[{src:asset('icon-192.png?v='+iconVersion),sizes:'192x192',type:'image/png'},{src:asset('icon-512.png?v='+iconVersion),sizes:'512x512',type:'image/png'}]};
  $('link[rel=manifest]').href=URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:'application/manifest+json'}));
