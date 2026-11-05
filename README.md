@@ -36,7 +36,7 @@ Draws avoid current duplicates and prefer topics not recently used in the room. 
 
 ## Settings And Installation
 
-Settings has Appearance, Room and Advanced groups. Color choices and **Off / Gentle / Playful / Ridiculous** animation levels apply immediately and save on this device. OS reduced motion is respected. No sound plays. Modals are centered; X, Escape and clicking outside close them. Draft text is saved only by its explicit Save button.
+Settings has Appearance, Room and Advanced groups. Color choices and **Off / Gentle / Playful / Ridiculous** animation levels apply immediately and save on this device. OS reduced motion is respected. No sound plays. Modals are centered except topic editors on phones, which open near the top and resize to the visible viewport so their Save footer stays above the keyboard. X, Escape and clicking outside close them. Draft text is saved only by its explicit Save button. Topic fields have no example placeholder; the optional switch says **Save this option for future games as well**.
 
 The four-color **horizontal-bar PNG**, like four ranked preferences, is the favicon, home-screen icon and header icon. Icon URLs are versioned to refresh caches; an already-installed phone shortcut might need removing and re-adding to replace its old artwork. Share / Save has room link copying, a locally generated QR and iPhone/Android installation instructions. The game dynamically creates a room-specific install manifest. Installed shortcuts are still websites, not separate data stores. Check your phone's installed shortcut opens the intended room; OS installation behavior can vary.
 

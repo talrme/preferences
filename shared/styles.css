@@ -4,6 +4,11 @@
 @media(max-width:359px){.app{padding:16px 12px 24px}h1{font-size:23px}.identity{gap:7px}.identity img{width:29px;height:29px}.room-link{max-width:95px}.tile-text{font-size:16px}.topic-tile{padding:12px 9px;gap:6px}.rank-tools .icon{width:26px;min-width:26px;padding:3px}.tile-number{width:17px;flex-basis:17px}.footer-tools{gap:3px 10px}.footer-tools button{font-size:10px}.palettes{gap:11px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 .ranking-list .topic-tile{animation:none!important}
+@media(max-width:600px){
+ dialog[open]:is([data-kind="item"],[data-kind="topic"]){display:flex;flex-direction:column;position:fixed;inset:auto 0 auto;top:calc(var(--editor-top,0px) + max(12px,env(safe-area-inset-top)));margin:0 auto;max-height:calc(var(--editor-height,100dvh) - max(12px,env(safe-area-inset-top)) - 12px)}
+ dialog:is([data-kind="item"],[data-kind="topic"]) .modal-head,dialog:is([data-kind="item"],[data-kind="topic"]) .modal-footer{flex-shrink:0}
+ dialog:is([data-kind="item"],[data-kind="topic"]) .modal-body{min-height:0;overflow-y:auto}
+}
 .ranking-list .topic-tile{touch-action:none;cursor:grab;user-select:none}
 .ranking-list .topic-tile:active{cursor:grabbing}
 .rank-tools{flex-direction:column;gap:2px}

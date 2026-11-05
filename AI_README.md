@@ -1,5 +1,9 @@
 # Preferences: AI Handoff
 
+## Phone Topic Editors
+
+Topic editor dialogs (data-kind=item/topic) open near the top at widths up to600px, not vertically centered. Other dialogs and desktop editors stay centered. visualViewport resize/scroll updates CSS variables for visible height/top; flex header/footer stay visible while the body scrolls above the software keyboard. Keep explicit Save and cancel/backdrop behavior. No example placeholder in the round topic textarea. The library-save switch label is Save this option for future games as well; backend semantics unchanged. Browser tests can simulate keyboard-height viewport changes, not an actual physical keyboard.
+
 ## November 5: Picker And Optional Guesses
 
 Latest user requests supersede earlier no-guesses/Star/drag-handle directions. Visible role name is now picker. No A-D labels on unranked topics. Top player-controls has device-local name and prominent I'm the picker role control; setup select-picker keeps topic editing open, then Rank privately calls claim. Same-owner role control hides/shows private view locally. Mid-round takeover requires confirmation and reducer checks captured owner/round ID; select-picker gives a fresh round ID with same topics, clears reveals/guesses, and starts fresh local ranking. Never copy another device's order. New round clears owner. Names persist in preferences-ui-v1; renaming current owner updates shared picker display.
