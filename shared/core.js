@@ -22,6 +22,11 @@
    const nonempty=state.items.filter(i=>i.text);if(new Set(nonempty.map(i=>normalized(i.text))).size!==nonempty.length)throw Error('Those topics match. Try a different one.');
   }else if(cmd.type==='picker'){
    if(state.phase!=='setup')throw Error('This round has already started.');state.picker=text(p.name).slice(0,50);
+  }else if(cmd.type==='release-picker'){
+   if(!p.device||state.owner!==p.device)throw Error('Only the current ranker can step down.');
+   if(p.expectedRoundId!==state.roundId||p.phase!==state.phase)throw Error('The round changed. Please try again.');
+   if(!p.roundId||p.roundId===state.roundId)throw Error('Stepping down needs a fresh ranking.');
+   const next=initial(state.id,p.roundId,now);next.items=state.items;next.seen=state.seen;next.guessesEnabled=Boolean(state.guessesEnabled);next.revision=state.revision+1;return next;
   }else if(cmd.type==='select-picker'){
    if(!p.device||!text(p.name))throw Error('Enter your name first.');
    if(state.phase!=='setup'){

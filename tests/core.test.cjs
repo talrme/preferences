@@ -28,3 +28,11 @@ step('claim');step('ready');step('back');assert.equal(nav.phase,'ranking');step(
 console.log('PASS owner-only forward/back navigation, retained topics, invalid/stale step guards, no premature reveal, guesses stay locked after seeing answers, results back/re-reveal.');
 step('profile',{name:'Tal',avatar:'koala'});assert.equal(nav.pickerAvatar,'koala');step('profile',{name:'Tal',avatar:'invalid'});assert.equal(nav.pickerAvatar,'');step('reset',{roundId:'avatar-round'});step('items',{items:drawn});step('select-picker',{name:'Tal',avatar:'baby'});assert.equal(nav.pickerAvatar,'baby');step('guessing',{enabled:true});step('claim');step('guess',{device:'b',name:'Sophie',avatar:'fox',order:ids});assert.equal(nav.guesses.b.avatar,'fox');step('profile',{device:'b',name:'Sophie',avatar:'robot'});assert.equal(nav.guesses.b.avatar,'robot');assert.equal(nav.pickerAvatar,'baby');assert.deepEqual(nav.guesses.b.order,ids);
 console.log('PASS avatar allowlist, ranker/guess profile updates and unchanged rankings.');
+for(const phase of ['setup','ranking','discuss','reveal','done']){
+ const source={...C.clone(nav),phase};
+ const payload={device:'a',expectedRevision:source.revision,expectedRoundId:source.roundId,phase,roundId:'released-'+phase};
+ const release=overrides=>C.apply(source,{type:'release-picker',payload:{...payload,...overrides}});
+ assert.throws(()=>release({device:'b'}),/Only/);assert.throws(()=>release({expectedRoundId:'stale'}),/changed/);assert.throws(()=>release({phase:'stale'}),/changed/);assert.throws(()=>release({roundId:source.roundId}),/fresh/);
+ const result=release({});assert.equal(result.owner,null);assert.equal(result.picker,'');assert.equal(result.phase,'setup');assert.equal(result.roundId,payload.roundId);assert.equal(result.revision,source.revision+1);assert.deepEqual(result.items,source.items);assert.deepEqual(result.seen,source.seen);assert.equal(result.guessesEnabled,source.guessesEnabled);assert.deepEqual(result.guesses,{});assert.deepEqual(result.revealed,[]);assert.equal(result.revealStarted,false);
+}
+console.log('PASS ranker release across all phases, owner/stale guards, fresh private round, kept topics/history/options and cleared guesses/reveals.');
