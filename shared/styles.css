@@ -92,9 +92,11 @@
 .round-progress .current{color:var(--ink);font-weight:750}
 .round-progress .current .step-circle{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);box-shadow:0 0 0 4px var(--soft)}
 .round-progress .complete .step-circle{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.round-utility{display:flex;justify-content:flex-end;margin:8px 0 15px}
-.new-round{font-size:11px;color:var(--muted);gap:5px;text-decoration:none;min-height:32px}
-.new-round svg{width:13px;height:13px}
+.round-utility{display:flex;flex-direction:column;align-items:center;gap:5px;margin:20px 0 15px}
+.new-round{font-size:13px;gap:8px;min-height:44px;min-width:210px;color:var(--accent-ink)}
+.new-round svg{width:16px;height:16px}
+.round-options{font-size:12px;gap:6px;min-height:44px;text-decoration:none}
+.round-options svg{width:15px;height:15px}
 body[data-palette]:not([data-palette="design"]):not([data-palette="night"]){color-scheme:light}
 body[data-palette]:not([data-palette="design"]):not([data-palette="night"]) .danger,body[data-palette]:not([data-palette="design"]):not([data-palette="night"]) #modal-error{color:#b43c48}
 

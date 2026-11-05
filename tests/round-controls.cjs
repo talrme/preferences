@@ -1,0 +1,12 @@
+const {chromium}=require('playwright'),assert=require('node:assert/strict');
+(async()=>{
+ const browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
+ try{
+  const p=await browser.newPage({viewport:{width:390,height:740},reducedMotion:'reduce'});await p.goto('http://127.0.0.1:5196/?demo=1&room=round-controls');await p.locator('[data-draw]').waitFor();assert.equal(await p.locator('[data-round-options]').count(),1);assert.equal(await p.locator('.new-round').innerText(),'Start a New Round');
+  for(const width of [320,390,1280]){await p.setViewportSize({width,height:900});const button=await p.locator('.new-round').boundingBox();assert(Math.abs(button.x+button.width/2-width/2)<2);assert(button.height>=44);assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));}
+  await p.locator('[data-draw]').click();await p.waitForFunction(()=>PreferencesTest.getPublic().items.every(item=>item.text));const before=await p.evaluate(()=>PreferencesTest.getPublic());await p.locator('[data-round-options]').click();assert.equal(await p.locator('#modal-title').innerText(),'Round options');await p.keyboard.press('Escape');await p.locator('.new-round').click();assert.equal(await p.locator('#modal-title').innerText(),'Start a new round?');await p.keyboard.press('Escape');assert.deepEqual(await p.evaluate(()=>PreferencesTest.getPublic()),before);
+  await p.locator('.new-round').click();await p.locator('[data-confirm]').click();await p.locator('#modal').waitFor({state:'hidden'});assert(await p.evaluate(()=>PreferencesTest.getPublic().items.every(item=>!item.text)));assert(await p.locator('[data-draw]').isVisible());
+  await p.setViewportSize({width:390,height:740});await p.locator('.round-utility').scrollIntoViewIfNeeded();await p.screenshot({path:'/tmp/preferences-bottom-round-controls.png'});
+  console.log('PASS centered prominent new-round button, labeled bottom options, confirmation/cancel/reset, unchanged random-topic action and320/390/1280 layouts.');
+ }finally{await browser.close();}
+})().catch(error=>{console.error(error);process.exitCode=1;});
